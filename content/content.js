@@ -1,4 +1,7 @@
 (() => {
+  if (window.__injectAndFillLoaded) return;
+  window.__injectAndFillLoaded = true;
+
   let observer = null;
 
   function getFieldSelector(el) {

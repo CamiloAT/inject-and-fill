@@ -375,10 +375,15 @@
 
         showToast(`${detectedFields.length} elementos detectados`, 'success');
       } else {
-        showToast('No se detectaron elementos', 'error');
+        const hint = response && response.error ? response.error : '';
+        if (hint.includes('Cannot access') || hint.includes('file://')) {
+          showToast('Ve a chrome://extensions > Detalles > activa "Allow access to file URLs"', 'error');
+        } else {
+          showToast('No se detectaron elementos', 'error');
+        }
       }
     } catch (err) {
-      showToast('Error al escanear', 'error');
+      showToast('Error: ' + (err.message || err), 'error');
     }
   }
 

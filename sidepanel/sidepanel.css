@@ -23,8 +23,8 @@ body {
   font-family: 'Segoe UI', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
-  width: 360px;
-  min-height: 400px;
+  width: 100%;
+  min-height: 100vh;
   font-size: 13px;
 }
 
