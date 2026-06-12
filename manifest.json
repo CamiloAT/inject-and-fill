@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "FormFilla Pro",
+  "name": "Inject and Fill",
   "version": "1.0.0",
   "description": "Automatiza el relleno de formularios con perfiles personalizados",
   "permissions": [
@@ -10,7 +10,7 @@
     "tabs"
   ],
   "action": {
-    "default_title": "FormFilla Pro",
+    "default_title": "Inject and Fill",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
