@@ -20,6 +20,34 @@
     return tag;
   }
 
+  function getElementLabel(el) {
+    if (el.id) {
+      const label = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+      if (label) return label.textContent.trim();
+    }
+    const parent = el.closest('label');
+    if (parent) return parent.textContent.trim();
+
+    const ariaLabel = el.getAttribute('aria-label');
+    if (ariaLabel) return ariaLabel;
+
+    const ariaLabelledBy = el.getAttribute('aria-labelledby');
+    if (ariaLabelledBy) {
+      const labelEl = document.getElementById(ariaLabelledBy);
+      if (labelEl) return labelEl.textContent.trim();
+    }
+
+    if (el.textContent && el.textContent.trim()) {
+      return el.textContent.trim().substring(0, 50);
+    }
+
+    if (el.value) return el.value;
+    if (el.title) return el.title;
+    if (el.alt) return el.alt;
+
+    return '';
+  }
+
   function simulateInput(el, value) {
     const nativeSetter = Object.getOwnPropertyDescriptor(
       el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value'
@@ -104,13 +132,20 @@
     return { success: true, selector: field.selector };
   }
 
+  function clickElement(field) {
+    const el = document.querySelector(field.selector);
+    if (!el) return { success: false, selector: field.selector, error: 'Elemento no encontrado' };
+    el.click();
+    return { success: true, selector: field.selector };
+  }
+
   function detectFormFields() {
     const fields = [];
-    const elements = document.querySelectorAll(
+    const formElements = document.querySelectorAll(
       'input, select, textarea, [role="textbox"], [role="combobox"], [role="checkbox"], [role="radio"]'
     );
 
-    elements.forEach((el, index) => {
+    formElements.forEach((el, index) => {
       const selector = getFieldSelector(el);
       const type = el.type || el.tagName.toLowerCase();
       const fieldType = el.tagName.toLowerCase() === 'select' ? 'select' : type;
@@ -124,13 +159,14 @@
         }));
       }
 
-      const label = findLabelFor(el);
+      const label = getElementLabel(el);
 
       fields.push({
         index,
         selector,
         tag: el.tagName.toLowerCase(),
         type: fieldType,
+        category: 'field',
         name: el.name || '',
         id: el.id || '',
         placeholder: el.placeholder || '',
@@ -143,43 +179,50 @@
       });
     });
 
+    const buttonElements = document.querySelectorAll(
+      'button, input[type="submit"], input[type="button"], [role="button"], a.btn, a.button'
+    );
+
+    buttonElements.forEach((el) => {
+      const selector = getFieldSelector(el);
+      const label = getElementLabel(el);
+      const tag = el.tagName.toLowerCase();
+
+      if (!label && !el.id && !el.name) return;
+
+      fields.push({
+        index: fields.length,
+        selector,
+        tag,
+        type: 'button',
+        category: 'button',
+        name: el.name || '',
+        id: el.id || '',
+        label,
+        value: el.value || el.textContent?.trim() || '',
+        disabled: el.disabled || false,
+        rect: el.getBoundingClientRect().toJSON()
+      });
+    });
+
     return fields;
   }
 
-  function findLabelFor(el) {
-    if (el.id) {
-      const label = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-      if (label) return label.textContent.trim();
-    }
-    const parent = el.closest('label');
-    if (parent) return parent.textContent.trim();
-
-    const ariaLabel = el.getAttribute('aria-label');
-    if (ariaLabel) return ariaLabel;
-
-    const ariaLabelledBy = el.getAttribute('aria-labelledby');
-    if (ariaLabelledBy) {
-      const labelEl = document.getElementById(ariaLabelledBy);
-      if (labelEl) return labelEl.textContent.trim();
-    }
-
-    return '';
-  }
-
-  async function fillFieldsSequentially(fields, delay) {
+  async function executeSequence(actions, delay) {
     const results = [];
-    for (const field of fields) {
-      const result = fillSingleField(field, field.value);
+    for (const action of actions) {
+      let result;
+      if (action.actionType === 'click') {
+        result = clickElement(action);
+      } else {
+        result = fillSingleField(action, action.value);
+      }
       results.push(result);
       if (delay > 0) {
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
     return results;
-  }
-
-  function fillFieldsParallel(fields) {
-    return fields.map(field => fillSingleField(field, field.value));
   }
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -190,12 +233,15 @@
 
     if (message.action === 'fillFields') {
       if (message.sequential) {
-        fillFieldsSequentially(message.fields, message.delay || 200).then(results => {
+        executeSequence(message.fields, message.delay || 200).then(results => {
           sendResponse({ results });
         });
         return true;
       } else {
-        const results = fillFieldsParallel(message.fields);
+        const results = message.fields.map(field => {
+          if (field.actionType === 'click') return clickElement(field);
+          return fillSingleField(field, field.value);
+        });
         sendResponse({ results });
       }
     }

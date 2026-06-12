@@ -427,6 +427,12 @@ body {
   font-style: italic;
 }
 
+.click-hint {
+  font-size: 11px;
+  color: var(--accent);
+  font-style: italic;
+}
+
 .mapping-item .mapping-header {
   display: flex;
   justify-content: space-between;
