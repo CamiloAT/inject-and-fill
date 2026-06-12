@@ -163,77 +163,6 @@ body {
   font-size: 12px;
 }
 
-.fields-count {
-  font-size: 12px;
-  color: var(--text-dim);
-  margin-bottom: 8px;
-}
-
-.fields-list {
-  max-height: 150px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.field-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 12px;
-}
-
-.field-item label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  flex: 1;
-  min-width: 0;
-}
-
-.field-item input[type="checkbox"] {
-  accent-color: var(--accent);
-  flex-shrink: 0;
-}
-
-.field-item input[type="text"] {
-  width: 100px;
-  padding: 4px 6px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  font-size: 11px;
-  outline: none;
-  flex-shrink: 0;
-}
-
-.field-item input[type="text"]:focus {
-  border-color: var(--accent);
-}
-
-.field-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-}
-
-.field-type {
-  font-size: 10px;
-  color: var(--text-dim);
-  background: var(--bg);
-  padding: 2px 6px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
 .actions {
   display: flex;
   flex-direction: column;
@@ -345,7 +274,7 @@ body {
   flex-shrink: 0;
 }
 
-.edit-form, .settings-form, .nav-form {
+.edit-form, .settings-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -403,6 +332,19 @@ body {
   accent-color: var(--accent);
 }
 
+.hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 8px;
+}
+
+.btn-add {
+  width: 100%;
+  justify-content: center;
+  font-size: 12px;
+}
+
 .mappings-list {
   display: flex;
   flex-direction: column;
@@ -432,7 +374,6 @@ body {
 }
 
 .mapping-item select {
-  width: 80px;
   padding: 6px;
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -440,6 +381,50 @@ body {
   color: var(--text);
   font-size: 11px;
   outline: none;
+}
+
+.mapping-field-select {
+  width: 100%;
+}
+
+.mapping-type {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.mapping-value-container .mapping-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.mapping-value-container .input,
+.mapping-value-container select {
+  flex: 1;
+}
+
+.mapping-value-select,
+.mapping-value-check {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 11px;
+  outline: none;
+}
+
+.mapping-value-select:focus,
+.mapping-value-check:focus {
+  border-color: var(--accent);
+}
+
+.radio-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 .mapping-item .mapping-header {

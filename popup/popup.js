@@ -1,5 +1,6 @@
 (() => {
   let editingProfileId = null;
+  let detectedFields = [];
 
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
@@ -44,41 +45,8 @@
     display.innerHTML = `
       <div class="profile-name">${escapeHtml(profile.name)}</div>
       ${profile.description ? `<div class="profile-desc">${escapeHtml(profile.description)}</div>` : ''}
-      <div class="profile-count">${profile.mappings ? profile.mappings.length : 0} campos mapeados</div>
+      <div class="profile-count">${profile.mappings ? profile.mappings.length : 0} campos</div>
     `;
-  }
-
-  async function renderDetectedFields() {
-    try {
-      const response = await chrome.runtime.sendMessage({ action: 'detectFields' });
-      if (response && response.fields) {
-        const list = $('#fields-list');
-        const count = $('#fields-count');
-        count.textContent = `${response.fields.length} campos encontrados`;
-
-        if (response.fields.length === 0) {
-          list.innerHTML = '';
-          return;
-        }
-
-        list.innerHTML = response.fields.map((f, i) => {
-          const label = f.label || f.name || f.placeholder || f.selector;
-          const type = f.tag === 'select' ? 'select' : f.type;
-          return `
-            <div class="field-item">
-              <label title="${escapeHtml(f.selector)}">
-                <input type="checkbox" data-index="${i}" checked>
-                <span class="field-label">${escapeHtml(label)}</span>
-                <span class="field-type">${type}</span>
-              </label>
-              <input type="text" data-index="${i}" value="${escapeHtml(f.value || '')}" placeholder="Valor...">
-            </div>
-          `;
-        }).join('');
-      }
-    } catch (err) {
-      showToast('Error detectando campos', 'error');
-    }
   }
 
   async function fillActiveProfile() {
@@ -179,18 +147,32 @@
     $('#edit-title').textContent = profile ? 'Editar Perfil' : 'Nuevo Perfil';
     $('#profile-name').value = profile ? profile.name : '';
     $('#profile-desc').value = profile ? (profile.description || '') : '';
+    $('#scan-hint').style.display = 'none';
 
     const list = $('#mappings-list');
     if (profile && profile.mappings && profile.mappings.length > 0) {
-      list.innerHTML = profile.mappings.map((m, i) => createMappingHtml(i + 1, m.selector, m.value, m.fieldType)).join('');
+      list.innerHTML = profile.mappings.map((m, i) =>
+        createMappingHtml(i + 1, m.selector, m.value, m.fieldType)
+      ).join('');
     } else {
-      list.innerHTML = createMappingHtml(1, '', '', 'text');
+      list.innerHTML = '';
     }
 
     switchView('view-edit-profile');
   }
 
-  function createMappingHtml(num, selector, value, type) {
+  function getFieldLabel(f) {
+    return f.label || f.name || f.placeholder || f.selector;
+  }
+
+  function getFieldType(f) {
+    if (f.tag === 'select') return 'select';
+    if (f.type === 'checkbox') return 'checkbox';
+    if (f.type === 'radio') return 'radio';
+    return 'text';
+  }
+
+  function createMappingHtml(num, savedSelector, savedValue, savedType) {
     return `
       <div class="mapping-item">
         <div class="mapping-header">
@@ -198,19 +180,104 @@
           <button class="icon-btn remove-mapping-btn" style="color:var(--danger);font-size:12px;">&#10005;</button>
         </div>
         <div class="mapping-row">
-          <input type="text" class="input mapping-selector" value="${escapeHtml(selector || '')}" placeholder="Selector CSS">
-        </div>
-        <div class="mapping-row">
-          <input type="text" class="input mapping-value" value="${escapeHtml(value || '')}" placeholder="Valor a rellenar">
-          <select class="mapping-type">
-            <option value="text" ${type === 'text' ? 'selected' : ''}>Texto</option>
-            <option value="select" ${type === 'select' ? 'selected' : ''}>Select</option>
-            <option value="checkbox" ${type === 'checkbox' ? 'selected' : ''}>Check</option>
-            <option value="radio" ${type === 'radio' ? 'selected' : ''}>Radio</option>
+          <select class="mapping-field-select">
+            <option value="">-- Seleccionar campo --</option>
+            ${detectedFields.map((f, i) => {
+              const label = getFieldLabel(f);
+              const type = getFieldType(f);
+              const selected = f.selector === savedSelector ? 'selected' : '';
+              return `<option value="${i}" ${selected}>${escapeHtml(label)} (${type})</option>`;
+            }).join('')}
           </select>
         </div>
+        <div class="mapping-value-container"></div>
       </div>
     `;
+  }
+
+  function renderValueInput(mappingItem, fieldIndex, savedValue) {
+    const container = mappingItem.querySelector('.mapping-value-container');
+    if (fieldIndex === '' || fieldIndex === undefined) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const field = detectedFields[fieldIndex];
+    if (!field) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const type = getFieldType(field);
+
+    if (type === 'select' && field.options && field.options.length > 0) {
+      container.innerHTML = `
+        <div class="mapping-row">
+          <select class="mapping-value mapping-value-select">
+            ${field.options.map(opt => {
+              const selected = (opt.value === savedValue || opt.text === savedValue) ? 'selected' : '';
+              return `<option value="${escapeHtml(opt.value)}" ${selected}>${escapeHtml(opt.text)}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      `;
+    } else if (type === 'checkbox') {
+      container.innerHTML = `
+        <div class="mapping-row">
+          <select class="mapping-value mapping-value-check">
+            <option value="true" ${savedValue === 'true' ? 'selected' : ''}>Marcar (checked)</option>
+            <option value="false" ${savedValue === 'false' ? 'selected' : ''}>Desmarcar (unchecked)</option>
+          </select>
+        </div>
+      `;
+    } else if (type === 'radio') {
+      container.innerHTML = `
+        <div class="mapping-row">
+          <span class="radio-hint">Se marcara este opcion</span>
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <div class="mapping-row">
+          <input type="text" class="input mapping-value mapping-value-text" value="${escapeHtml(savedValue || '')}" placeholder="Valor a rellenar">
+        </div>
+      `;
+    }
+  }
+
+  async function scanFields() {
+    try {
+      const response = await chrome.runtime.sendMessage({ action: 'detectFields' });
+      if (response && response.fields && response.fields.length > 0) {
+        detectedFields = response.fields;
+        $('#scan-hint').style.display = 'none';
+
+        const list = $('#mappings-list');
+        if (list.children.length === 0) {
+          list.innerHTML = createMappingHtml(1, '', '', 'text');
+          const item = list.querySelector('.mapping-item');
+          renderValueInput(item, '', '');
+        } else {
+          list.querySelectorAll('.mapping-item').forEach(item => {
+            const sel = item.querySelector('.mapping-field-select');
+            const currentIdx = sel.value;
+            sel.innerHTML = '<option value="">-- Seleccionar campo --</option>' + detectedFields.map((f, i) => {
+              const label = getFieldLabel(f);
+              const type = getFieldType(f);
+              return `<option value="${i}">${escapeHtml(label)} (${type})</option>`;
+            }).join('');
+            sel.value = currentIdx;
+            renderValueInput(item, currentIdx, '');
+          });
+        }
+
+        showToast(`${detectedFields.length} campos detectados`, 'success');
+      } else {
+        showToast('No se detectaron campos', 'error');
+      }
+    } catch (err) {
+      showToast('Error al escanear', 'error');
+    }
   }
 
   async function saveProfile() {
@@ -222,11 +289,24 @@
 
     const mappings = [];
     $$('#mappings-list .mapping-item').forEach(item => {
-      const selector = item.querySelector('.mapping-selector').value.trim();
-      const value = item.querySelector('.mapping-value').value.trim();
-      const fieldType = item.querySelector('.mapping-type').value;
-      if (selector) mappings.push({ selector, value, fieldType });
+      const fieldIndex = item.querySelector('.mapping-field-select').value;
+      const valueEl = item.querySelector('.mapping-value');
+      const value = valueEl ? (valueEl.value || '').trim() : '';
+
+      if (fieldIndex !== '' && detectedFields[fieldIndex]) {
+        const field = detectedFields[fieldIndex];
+        mappings.push({
+          selector: field.selector,
+          value,
+          fieldType: getFieldType(field)
+        });
+      }
     });
+
+    if (mappings.length === 0) {
+      showToast('Agrega al menos un campo', 'error');
+      return;
+    }
 
     if (editingProfileId) {
       await Storage.updateProfile(editingProfileId, {
@@ -254,14 +334,12 @@
     const settings = await Storage.getSettings();
     $('#setting-delay').value = settings.fillDelay;
     $('#setting-sequential').checked = settings.sequential;
-    $('#setting-autodetect').checked = settings.autoDetect || false;
   }
 
   async function saveSettings() {
     await Storage.saveSettings({
       fillDelay: parseInt($('#setting-delay').value) || 200,
-      sequential: $('#setting-sequential').checked,
-      autoDetect: $('#setting-autodetect').checked
+      sequential: $('#setting-sequential').checked
     });
   }
 
@@ -269,8 +347,7 @@
     renderActiveProfile();
     loadSettings();
 
-    // Main view buttons
-    $('#btn-detect').addEventListener('click', renderDetectedFields);
+    // Main view
     $('#btn-fill').addEventListener('click', fillActiveProfile);
     $('#btn-reload').addEventListener('click', () => {
       chrome.runtime.sendMessage({ action: 'reloadTab', bypassCache: false });
@@ -281,18 +358,16 @@
       showToast('Recargando sin cache...', 'success');
     });
     $('#btn-settings').addEventListener('click', () => switchView('view-settings'));
-
-    // Profile display click
     $('#active-profile-display').addEventListener('click', () => {
+      renderProfiles();
+      switchView('view-profiles');
+    });
+    $('#btn-manage-profiles').addEventListener('click', () => {
       renderProfiles();
       switchView('view-profiles');
     });
 
     // Profiles view
-    $('#btn-manage-profiles').addEventListener('click', () => {
-      renderProfiles();
-      switchView('view-profiles');
-    });
     $('#btn-back-profiles').addEventListener('click', () => {
       renderActiveProfile();
       switchView('view-main');
@@ -302,20 +377,27 @@
     // Edit profile view
     $('#btn-back-edit').addEventListener('click', () => switchView('view-profiles'));
     $('#btn-save-profile').addEventListener('click', saveProfile);
-    $('#btn-add-field').addEventListener('click', () => {
+    $('#btn-scan-fields').addEventListener('click', scanFields);
+    $('#btn-add-mapping').addEventListener('click', () => {
       const list = $('#mappings-list');
       const count = list.querySelectorAll('.mapping-item').length + 1;
-      list.insertAdjacentHTML('beforeend', createMappingHtml(count, '', '', 'text'));
+      const html = createMappingHtml(count, '', '', 'text');
+      list.insertAdjacentHTML('beforeend', html);
+      const newItem = list.lastElementChild;
+      renderValueInput(newItem, '', '');
     });
 
-    // Remove mapping
-    $$('.mappings-list').forEach(list => {
-      list.addEventListener('click', (e) => {
-        const btn = e.target.closest('.remove-mapping-btn');
-        if (btn) {
-          btn.closest('.mapping-item').remove();
-        }
-      });
+    // Delegated events on mappings-list
+    $('#mappings-list').addEventListener('click', (e) => {
+      const btn = e.target.closest('.remove-mapping-btn');
+      if (btn) btn.closest('.mapping-item').remove();
+    });
+
+    $('#mappings-list').addEventListener('change', (e) => {
+      if (e.target.classList.contains('mapping-field-select')) {
+        const mappingItem = e.target.closest('.mapping-item');
+        renderValueInput(mappingItem, e.target.value, '');
+      }
     });
 
     // Settings view
@@ -325,10 +407,6 @@
     });
     $('#setting-delay').addEventListener('change', saveSettings);
     $('#setting-sequential').addEventListener('change', saveSettings);
-    $('#setting-autodetect').addEventListener('change', saveSettings);
-
-    // Navigate and click views are opened via main - need separate buttons
-    // For now they're accessible through settings or we can add them later
   }
 
   document.addEventListener('DOMContentLoaded', init);

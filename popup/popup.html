@@ -28,15 +28,6 @@
       </div>
     </div>
 
-    <div class="section">
-      <div class="section-header">
-        <span class="section-label">Campos Detectados</span>
-        <button id="btn-detect" class="link-btn">Escanear</button>
-      </div>
-      <div id="fields-count" class="fields-count">0 campos encontrados</div>
-      <div id="fields-list" class="fields-list"></div>
-    </div>
-
     <div class="actions">
       <button id="btn-fill" class="btn btn-fill">
         <span>&#9654;</span> Rellenar Formulario
@@ -75,9 +66,11 @@
       <div class="form-group">
         <div class="section-header">
           <label>Mapeo de Campos</label>
-          <button id="btn-add-field" class="link-btn">+ Agregar</button>
+          <button id="btn-scan-fields" class="link-btn">&#8635; Escanear pagina</button>
         </div>
+        <p id="scan-hint" class="hint">Haz clic en "Escanear pagina" para detectar los campos del formulario</p>
         <div id="mappings-list" class="mappings-list"></div>
+        <button id="btn-add-mapping" class="btn btn-secondary btn-add" style="margin-top:8px;">+ Agregar campo manualmente</button>
       </div>
     </div>
   </div>
@@ -96,32 +89,6 @@
         <label>Rellenar secuencialmente</label>
         <input type="checkbox" id="setting-sequential" checked>
       </div>
-      <div class="setting-row">
-        <label>Auto-detectar campos</label>
-        <input type="checkbox" id="setting-autodetect">
-      </div>
-    </div>
-  </div>
-
-  <div id="view-navigate" class="view">
-    <div class="view-header">
-      <button id="btn-back-nav" class="icon-btn">&#8592;</button>
-      <span class="view-title">Navegar a URL</span>
-    </div>
-    <div class="nav-form">
-      <input type="url" id="nav-url" class="input" placeholder="https://ejemplo.com">
-      <button id="btn-go" class="btn btn-fill">Ir</button>
-    </div>
-  </div>
-
-  <div id="view-click" class="view">
-    <div class="view-header">
-      <button id="btn-back-click" class="icon-btn">&#8592;</button>
-      <span class="view-title">Click en Elemento</span>
-    </div>
-    <div class="nav-form">
-      <input type="text" id="click-selector" class="input" placeholder="CSS selector">
-      <button id="btn-click-go" class="btn btn-fill">Ejecutar Click</button>
     </div>
   </div>
 
