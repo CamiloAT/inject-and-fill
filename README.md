@@ -21,7 +21,7 @@ A **browser extension** for Chrome, Edge and Brave that automates form filling w
 ### Intelligent Value Mapping
 * **Select fields:** Shows actual `<option>` values from the page — no guesswork, no invalid values.
 * **Radio buttons:** Groups radios by `name` into a single entry with a dropdown of all available options.
-* **Checkboxes:** Clear "Marcar / Desmarcar" options.
+* **Checkboxes:** Clear "Check / Uncheck" options.
 * **Buttons:** Detected and available as `[Click]` actions in the sequence.
 * **Text fields:** Free-form input for any text, email, number, password, etc.
 
@@ -50,7 +50,7 @@ A **browser extension** for Chrome, Edge and Brave that automates form filling w
 
 | View | Description |
 |------|-------------|
-| **Main** | Shows active profile name and "Rellenar Formulario" button |
+| **Main** | Shows active profile name and "Fill Form" button |
 | **Profiles** | List all profiles with activate / edit / delete actions |
 | **Editor** | Name, description, scan page, map fields with dropdowns |
 | **Settings** | Delay between fields, sequential mode toggle |
@@ -71,19 +71,19 @@ cd inject-and-fill
 ### 2. Load the extension in Chrome
 
 1. Open `chrome://extensions/` in your browser.
-2. Enable **Modo desarrollador** (Developer mode) in the top right corner.
-3. Click **Cargar extensión sin empaquetar** (Load unpacked).
+2. Enable **Developer mode** in the top right corner.
+3. Click **Load unpacked**.
 4. Select the `inject-and-fill` folder.
 
 ### 3. Use the extension
 
 1. Navigate to any page with a form.
 2. Click the extension icon to open the popup.
-3. Go to **Gestionar** → **+** to create a new profile.
-4. Click **Escanear pagina** to detect form fields and buttons.
+3. Go to **Manage** → **+** to create a new profile.
+4. Click **Scan Page** to detect form fields and buttons.
 5. Select fields from the dropdown and assign values.
 6. Save and activate the profile.
-7. Click **Rellenar Formulario** to execute.
+7. Click **Fill Form** to execute.
 
 ---
 
@@ -143,10 +143,10 @@ inject-and-fill/
 |------|-----------|-------------|-----------|
 | Text / Email / Tel / Number / Password / URL | `<input type="text">` etc. | Free text input | `nativeSetter` + `input`/`change` events |
 | Select | `<select>` | Dropdown with real `<option>` values | `.value =` + `change` event |
-| Checkbox | `<input type="checkbox">` | Marcar / Desmarcar | `.checked =` + `change`/`click` events |
+| Checkbox | `<input type="checkbox">` | Checked / Unchecked | `.checked =` + `change`/`click` events |
 | Radio | `<input type="radio">` | Dropdown grouped by `name` | Find by value in group + `change`/`click` |
 | Textarea | `<textarea>` | Free text input | `nativeSetter` + `input`/`change` events |
-| Button | `<button>`, `<input type="submit">`, `[role="button"]` | "Hara click en este elemento" | `.click()` |
+| Button | `<button>`, `<input type="submit">`, `[role="button"]` | "Will click on this element" | `.click()` |
 
 ---
 
