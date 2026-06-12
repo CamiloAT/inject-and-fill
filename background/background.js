@@ -1,5 +1,3 @@
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'reloadTab') {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

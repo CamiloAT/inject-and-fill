@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inject and Fill</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <img src="../icons/icon48.png" alt="icon" class="header-icon">
+      <span class="header-title">Inject and Fill</span>
+    </div>
+    <div class="header-right">
+      <button id="btn-settings" class="icon-btn" title="Configuracion">&#9881;</button>
+    </div>
+  </header>
+
+  <div id="view-main" class="view active">
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">Perfil Activo</span>
+        <button id="btn-manage-profiles" class="link-btn">Gestionar</button>
+      </div>
+      <div id="active-profile-display" class="profile-display">
+        <span class="no-profile">Ningun perfil seleccionado</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">Campos Detectados</span>
+        <button id="btn-detect" class="link-btn">Escanear</button>
+      </div>
+      <div id="fields-count" class="fields-count">0 campos encontrados</div>
+      <div id="fields-list" class="fields-list"></div>
+    </div>
+
+    <div class="actions">
+      <button id="btn-fill" class="btn btn-fill">
+        <span>&#9654;</span> Rellenar Formulario
+      </button>
+      <div class="actions-row">
+        <button id="btn-reload" class="btn btn-secondary">&#8635; Recargar</button>
+        <button id="btn-reload-nocache" class="btn btn-secondary">&#9881; Sin Cache</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-profiles" class="view">
+    <div class="view-header">
+      <button id="btn-back-profiles" class="icon-btn">&#8592;</button>
+      <span class="view-title">Perfiles</span>
+      <button id="btn-new-profile" class="icon-btn">&#43;</button>
+    </div>
+    <div id="profiles-list" class="profiles-list"></div>
+  </div>
+
+  <div id="view-edit-profile" class="view">
+    <div class="view-header">
+      <button id="btn-back-edit" class="icon-btn">&#8592;</button>
+      <span id="edit-title" class="view-title">Nuevo Perfil</span>
+      <button id="btn-save-profile" class="icon-btn save-btn">&#10003;</button>
+    </div>
+    <div class="edit-form">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="profile-name" class="input" placeholder="Mi perfil">
+      </div>
+      <div class="form-group">
+        <label>Descripcion</label>
+        <input type="text" id="profile-desc" class="input" placeholder="Opcional">
+      </div>
+      <div class="form-group">
+        <div class="section-header">
+          <label>Mapeo de Campos</label>
+          <button id="btn-add-field" class="link-btn">+ Agregar</button>
+        </div>
+        <div id="mappings-list" class="mappings-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-settings" class="view">
+    <div class="view-header">
+      <button id="btn-back-settings" class="icon-btn">&#8592;</button>
+      <span class="view-title">Configuracion</span>
+    </div>
+    <div class="settings-form">
+      <div class="setting-row">
+        <label>Retraso entre campos (ms)</label>
+        <input type="number" id="setting-delay" class="input input-small" value="200" min="0" max="5000">
+      </div>
+      <div class="setting-row">
+        <label>Rellenar secuencialmente</label>
+        <input type="checkbox" id="setting-sequential" checked>
+      </div>
+      <div class="setting-row">
+        <label>Auto-detectar campos</label>
+        <input type="checkbox" id="setting-autodetect">
+      </div>
+    </div>
+  </div>
+
+  <div id="view-navigate" class="view">
+    <div class="view-header">
+      <button id="btn-back-nav" class="icon-btn">&#8592;</button>
+      <span class="view-title">Navegar a URL</span>
+    </div>
+    <div class="nav-form">
+      <input type="url" id="nav-url" class="input" placeholder="https://ejemplo.com">
+      <button id="btn-go" class="btn btn-fill">Ir</button>
+    </div>
+  </div>
+
+  <div id="view-click" class="view">
+    <div class="view-header">
+      <button id="btn-back-click" class="icon-btn">&#8592;</button>
+      <span class="view-title">Click en Elemento</span>
+    </div>
+    <div class="nav-form">
+      <input type="text" id="click-selector" class="input" placeholder="CSS selector">
+      <button id="btn-click-go" class="btn btn-fill">Ejecutar Click</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
