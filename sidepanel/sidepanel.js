@@ -218,8 +218,20 @@
   function getItemLabel(f) {
     const label = getFieldLabel(f);
     const type = getFieldType(f);
-    if (type === 'button') return `[Click] ${label}`;
-    return `${label} (${type})`;
+    if (type === 'button') return `[BOTON] ${label}`;
+    if (type === 'select') {
+      const current = f.options ? f.options.find(o => o.selected) : null;
+      const suffix = current ? ` → "${current.text}"` : '';
+      return `[SELECT] ${label}${suffix}`;
+    }
+    if (type === 'checkbox') {
+      const suffix = f.checked ? ' ✓' : '';
+      return `[CHECK] ${label}${suffix}`;
+    }
+    if (type === 'radio') return `[RADIO] ${label} "${f.value}"`;
+    const val = f.value || '';
+    const suffix = val ? ` = "${val}"` : '';
+    return `[INPUT] ${label}${suffix}`;
   }
 
   let radioGroups = {};
@@ -238,7 +250,8 @@
         radioGroups[f.name] = groupRadios;
 
         const label = f.name || getFieldLabel(f);
-        options += `<option value="radiogroup:${escapeHtml(f.name)}">${escapeHtml(label)} (radio ${groupRadios.length} opciones)</option>`;
+        const values = groupRadios.map(r => r.value).join(', ');
+        options += `<option value="radiogroup:${escapeHtml(f.name)}">[RADIO] ${escapeHtml(label)} (${values})</option>`;
       } else if (f.type !== 'radio') {
         options += `<option value="${i}">${escapeHtml(getItemLabel(f))}</option>`;
       }
