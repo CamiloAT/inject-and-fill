@@ -76,7 +76,8 @@
       selector: m.selector,
       value: m.value,
       fieldType: m.fieldType,
-      actionType: m.actionType || 'fill'
+      actionType: m.actionType || 'fill',
+      delay: m.delay
     }));
 
     try {
@@ -160,7 +161,7 @@
     const list = $('#mappings-list');
     if (profile && profile.mappings && profile.mappings.length > 0) {
       list.innerHTML = profile.mappings.map((m, i) =>
-        createMappingHtml(i + 1, m.selector, m.value, m.fieldType, m.actionType)
+        createMappingHtml(i + 1, m.selector, m.value, m.fieldType, m.actionType, m.delay)
       ).join('');
     } else {
       list.innerHTML = '';
@@ -245,12 +246,20 @@
     return options;
   }
 
-  function createMappingHtml(num, savedSelector, savedValue, savedType, savedActionType) {
+  function createMappingHtml(num, savedSelector, savedValue, savedType, savedActionType, savedDelay) {
+    const delayVal = savedDelay !== undefined && savedDelay !== null && savedDelay !== '' ? savedDelay : '';
     return `
-      <div class="mapping-item" data-saved-selector="${escapeHtml(savedSelector || '')}" data-saved-value="${escapeHtml(savedValue || '')}" data-saved-action-type="${escapeHtml(savedActionType || '')}">
+      <div class="mapping-item" draggable="true" data-saved-selector="${escapeHtml(savedSelector || '')}" data-saved-value="${escapeHtml(savedValue || '')}" data-saved-action-type="${escapeHtml(savedActionType || '')}">
         <div class="mapping-header">
-          <span class="mapping-num">Accion ${num}</span>
-          <button class="icon-btn remove-mapping-btn" style="color:var(--danger);font-size:12px;">&#10005;</button>
+          <div class="mapping-header-left">
+            <span class="mapping-drag-handle" title="Arrastrar para reordenar">&#9776;</span>
+            <span class="mapping-num">Accion ${num}</span>
+          </div>
+          <div class="mapping-header-right">
+            <button class="icon-btn move-up-btn" title="Mover arriba">&#9650;</button>
+            <button class="icon-btn move-down-btn" title="Mover abajo">&#9660;</button>
+            <button class="icon-btn remove-mapping-btn" style="color:var(--danger);font-size:12px;">&#10005;</button>
+          </div>
         </div>
         <div class="mapping-row">
           <select class="mapping-field-select">
@@ -259,6 +268,10 @@
           </select>
         </div>
         <div class="mapping-value-container"></div>
+        <div class="mapping-row mapping-delay-row">
+          <label class="mapping-delay-label">Retraso (ms)</label>
+          <input type="number" class="input input-small mapping-delay" value="${escapeHtml(String(delayVal))}" placeholder="Global" min="0" max="30000">
+        </div>
       </div>
     `;
   }
@@ -347,7 +360,7 @@
 
         const list = $('#mappings-list');
         if (list.children.length === 0) {
-          list.innerHTML = createMappingHtml(1, '', '', 'text', '');
+          list.innerHTML = createMappingHtml(1, '', '', 'text', '', null);
           const item = list.querySelector('.mapping-item');
           renderValueInput(item, '', '');
         } else {
@@ -400,6 +413,8 @@
       const valueEl = item.querySelector('.mapping-value');
       const value = valueEl ? (valueEl.value || '').trim() : '';
       const savedSelector = item.dataset.savedSelector || '';
+      const delayEl = item.querySelector('.mapping-delay');
+      const delay = delayEl && delayEl.value !== '' ? parseInt(delayEl.value) : null;
 
       if (fieldIndex.startsWith('radiogroup:')) {
         const radioName = fieldIndex.replace('radiogroup:', '');
@@ -409,7 +424,8 @@
             selector: radio.selector,
             value: radio.value,
             fieldType: 'radio',
-            actionType: 'fill'
+            actionType: 'fill',
+            delay
           });
         }
       } else if (fieldIndex !== '' && detectedFields[fieldIndex]) {
@@ -418,14 +434,16 @@
           selector: field.selector,
           value,
           fieldType: getFieldType(field),
-          actionType: getFieldType(field) === 'button' ? 'click' : 'fill'
+          actionType: getFieldType(field) === 'button' ? 'click' : 'fill',
+          delay
         });
       } else if (savedSelector) {
         mappings.push({
           selector: savedSelector,
           value: item.dataset.savedValue || value,
           fieldType: 'text',
-          actionType: item.dataset.savedActionType || 'fill'
+          actionType: item.dataset.savedActionType || 'fill',
+          delay
         });
       }
     });
@@ -470,6 +488,25 @@
     });
   }
 
+  function renumberMappings() {
+    $$('#mappings-list .mapping-item').forEach((item, i) => {
+      const num = item.querySelector('.mapping-num');
+      if (num) num.textContent = `Accion ${i + 1}`;
+    });
+  }
+
+  function moveMapping(item, direction) {
+    const list = $('#mappings-list');
+    const items = Array.from(list.querySelectorAll('.mapping-item'));
+    const idx = items.indexOf(item);
+    if (direction === 'up' && idx > 0) {
+      list.insertBefore(item, items[idx - 1]);
+    } else if (direction === 'down' && idx < items.length - 1) {
+      list.insertBefore(items[idx + 1], item);
+    }
+    renumberMappings();
+  }
+
   function init() {
     renderActiveProfile();
     loadSettings();
@@ -508,7 +545,7 @@
     $('#btn-add-mapping').addEventListener('click', () => {
       const list = $('#mappings-list');
       const count = list.querySelectorAll('.mapping-item').length + 1;
-      const html = createMappingHtml(count, '', '', 'text', '');
+      const html = createMappingHtml(count, '', '', 'text', '', null);
       list.insertAdjacentHTML('beforeend', html);
       const newItem = list.lastElementChild;
       renderValueInput(newItem, '', '');
@@ -516,8 +553,22 @@
 
     // Delegated events on mappings-list
     $('#mappings-list').addEventListener('click', (e) => {
-      const btn = e.target.closest('.remove-mapping-btn');
-      if (btn) btn.closest('.mapping-item').remove();
+      const removeBtn = e.target.closest('.remove-mapping-btn');
+      if (removeBtn) {
+        removeBtn.closest('.mapping-item').remove();
+        renumberMappings();
+        return;
+      }
+      const upBtn = e.target.closest('.move-up-btn');
+      if (upBtn) {
+        moveMapping(upBtn.closest('.mapping-item'), 'up');
+        return;
+      }
+      const downBtn = e.target.closest('.move-down-btn');
+      if (downBtn) {
+        moveMapping(downBtn.closest('.mapping-item'), 'down');
+        return;
+      }
     });
 
     $('#mappings-list').addEventListener('change', (e) => {
@@ -544,6 +595,47 @@
         const mappingItem = e.target.closest('.mapping-item');
         mappingItem.dataset.savedValue = e.target.value;
       }
+    });
+
+    // Drag and drop reorder
+    let draggedItem = null;
+    $('#mappings-list').addEventListener('dragstart', (e) => {
+      draggedItem = e.target.closest('.mapping-item');
+      if (draggedItem) {
+        draggedItem.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      }
+    });
+    $('#mappings-list').addEventListener('dragend', (e) => {
+      if (draggedItem) draggedItem.classList.remove('dragging');
+      draggedItem = null;
+      $$('.mapping-item').forEach(el => el.classList.remove('drag-over'));
+    });
+    $('#mappings-list').addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const target = e.target.closest('.mapping-item');
+      if (target && target !== draggedItem) {
+        $$('.mapping-item').forEach(el => el.classList.remove('drag-over'));
+        target.classList.add('drag-over');
+      }
+    });
+    $('#mappings-list').addEventListener('drop', (e) => {
+      e.preventDefault();
+      const target = e.target.closest('.mapping-item');
+      if (target && target !== draggedItem && draggedItem) {
+        const list = $('#mappings-list');
+        const items = Array.from(list.querySelectorAll('.mapping-item'));
+        const dragIdx = items.indexOf(draggedItem);
+        const dropIdx = items.indexOf(target);
+        if (dragIdx < dropIdx) {
+          list.insertBefore(draggedItem, target.nextSibling);
+        } else {
+          list.insertBefore(draggedItem, target);
+        }
+        renumberMappings();
+      }
+      $$('.mapping-item').forEach(el => el.classList.remove('drag-over'));
     });
 
     // Settings view

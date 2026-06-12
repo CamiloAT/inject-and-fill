@@ -435,10 +435,58 @@ body {
   font-style: italic;
 }
 
+.mapping-delay-row {
+  margin-top: 4px;
+}
+
+.mapping-delay-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.mapping-delay {
+  width: 70px;
+  flex-shrink: 0;
+}
+
 .mapping-item .mapping-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.mapping-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mapping-header-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.mapping-drag-handle {
+  cursor: grab;
+  color: var(--text-dim);
+  font-size: 14px;
+  user-select: none;
+  line-height: 1;
+}
+
+.mapping-drag-handle:active {
+  cursor: grabbing;
+}
+
+.mapping-item.dragging {
+  opacity: 0.5;
+}
+
+.mapping-item.drag-over {
+  border-color: var(--accent);
+  border-style: dashed;
 }
 
 .mapping-item .mapping-num {

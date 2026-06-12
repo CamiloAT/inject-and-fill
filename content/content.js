@@ -225,7 +225,7 @@
     return fields;
   }
 
-  async function executeSequence(actions, delay) {
+  async function executeSequence(actions, globalDelay) {
     const results = [];
     for (const action of actions) {
       let result;
@@ -235,6 +235,7 @@
         result = fillSingleField(action, action.value);
       }
       results.push(result);
+      const delay = (action.delay !== null && action.delay !== undefined && action.delay !== '') ? action.delay : globalDelay;
       if (delay > 0) {
         await new Promise(resolve => setTimeout(resolve, delay));
       }
