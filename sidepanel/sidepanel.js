@@ -250,7 +250,7 @@
   function createMappingHtml(num, savedSelector, savedValue, savedType, savedActionType, savedDelay) {
     const delayVal = savedDelay !== undefined && savedDelay !== null && savedDelay !== '' ? savedDelay : globalDelay;
     return `
-      <div class="mapping-item" draggable="true" data-saved-selector="${escapeHtml(savedSelector || '')}" data-saved-value="${escapeHtml(savedValue || '')}" data-saved-action-type="${escapeHtml(savedActionType || '')}">
+      <div class="mapping-item" data-saved-selector="${escapeHtml(savedSelector || '')}" data-saved-value="${escapeHtml(savedValue || '')}" data-saved-action-type="${escapeHtml(savedActionType || '')}">
         <div class="mapping-header">
           <div class="mapping-header-left">
             <span class="mapping-drag-handle" title="Arrastrar para reordenar">&#9776;</span>
@@ -600,17 +600,27 @@
       }
     });
 
-    // Drag and drop reorder
+    // Drag and drop reorder (only from handle)
     let draggedItem = null;
+    $('#mappings-list').addEventListener('mousedown', (e) => {
+      const handle = e.target.closest('.mapping-drag-handle');
+      if (handle) {
+        handle.closest('.mapping-item').setAttribute('draggable', 'true');
+      }
+    });
     $('#mappings-list').addEventListener('dragstart', (e) => {
-      draggedItem = e.target.closest('.mapping-item');
+      const handle = e.target.closest('.mapping-drag-handle');
+      draggedItem = handle ? handle.closest('.mapping-item') : e.target.closest('.mapping-item');
       if (draggedItem) {
         draggedItem.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
       }
     });
     $('#mappings-list').addEventListener('dragend', (e) => {
-      if (draggedItem) draggedItem.classList.remove('dragging');
+      if (draggedItem) {
+        draggedItem.classList.remove('dragging');
+        draggedItem.removeAttribute('draggable');
+      }
       draggedItem = null;
       $$('.mapping-item').forEach(el => el.classList.remove('drag-over'));
     });
