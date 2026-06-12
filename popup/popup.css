@@ -405,7 +405,8 @@ body {
 }
 
 .mapping-value-select,
-.mapping-value-check {
+.mapping-value-check,
+.mapping-value-radio {
   width: 100%;
   padding: 6px 8px;
   background: var(--bg-input);
@@ -417,7 +418,8 @@ body {
 }
 
 .mapping-value-select:focus,
-.mapping-value-check:focus {
+.mapping-value-check:focus,
+.mapping-value-radio:focus {
   border-color: var(--accent);
 }
 

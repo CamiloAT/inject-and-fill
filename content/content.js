@@ -76,7 +76,21 @@
     el.dispatchEvent(new Event('click', { bubbles: true }));
   }
 
-  function simulateRadio(el) {
+  function simulateRadio(el, value) {
+    if (value !== undefined && value !== '') {
+      const name = el.name;
+      if (name) {
+        const group = document.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`);
+        for (const radio of group) {
+          if (radio.value === value) {
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+            radio.dispatchEvent(new Event('click', { bubbles: true }));
+            return;
+          }
+        }
+      }
+    }
     el.checked = true;
     el.dispatchEvent(new Event('change', { bubbles: true }));
     el.dispatchEvent(new Event('click', { bubbles: true }));
@@ -98,7 +112,7 @@
         simulateCheckbox(el, value === 'true' || value === true || value === '1');
         break;
       case 'radio':
-        simulateRadio(el);
+        simulateRadio(el, value);
         break;
       case 'text':
       case 'email':
@@ -123,7 +137,7 @@
         } else if (type === 'checkbox') {
           simulateCheckbox(el, value);
         } else if (type === 'radio') {
-          simulateRadio(el);
+          simulateRadio(el, value);
         } else {
           simulateInput(el, value);
         }

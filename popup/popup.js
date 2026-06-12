@@ -185,10 +185,15 @@
           sel.innerHTML = '<option value="">-- Seleccionar campo o boton --</option>' + buildFieldOptions();
 
           if (savedSelector) {
-            const matchIdx = detectedFields.findIndex(f => f.selector === savedSelector);
-            if (matchIdx !== -1) {
-              sel.value = matchIdx.toString();
-              renderValueInput(item, matchIdx.toString(), savedValue);
+            if (savedSelector.startsWith('radiogroup:')) {
+              sel.value = savedSelector;
+              renderValueInput(item, savedSelector, savedValue);
+            } else {
+              const matchIdx = detectedFields.findIndex(f => f.selector === savedSelector);
+              if (matchIdx !== -1) {
+                sel.value = matchIdx.toString();
+                renderValueInput(item, matchIdx.toString(), savedValue);
+              }
             }
           }
         });
@@ -215,11 +220,29 @@
     return `${label} (${type})`;
   }
 
+  let radioGroups = {};
+
   function buildFieldOptions() {
-    return detectedFields.map((f, i) => {
-      const itemLabel = getItemLabel(f);
-      return `<option value="${i}">${escapeHtml(itemLabel)}</option>`;
-    }).join('');
+    radioGroups = {};
+    const seen = new Set();
+    let options = '';
+
+    detectedFields.forEach((f, i) => {
+      if (f.type === 'radio' && f.name) {
+        if (seen.has(f.name)) return;
+        seen.add(f.name);
+
+        const groupRadios = detectedFields.filter(r => r.type === 'radio' && r.name === f.name);
+        radioGroups[f.name] = groupRadios;
+
+        const label = f.name || getFieldLabel(f);
+        options += `<option value="radiogroup:${escapeHtml(f.name)}">${escapeHtml(label)} (radio ${groupRadios.length} opciones)</option>`;
+      } else if (f.type !== 'radio') {
+        options += `<option value="${i}">${escapeHtml(getItemLabel(f))}</option>`;
+      }
+    });
+
+    return options;
   }
 
   function createMappingHtml(num, savedSelector, savedValue, savedType, savedActionType) {
@@ -244,6 +267,27 @@
     const container = mappingItem.querySelector('.mapping-value-container');
     if (fieldIndex === '' || fieldIndex === undefined) {
       container.innerHTML = '';
+      return;
+    }
+
+    if (typeof fieldIndex === 'string' && fieldIndex.startsWith('radiogroup:')) {
+      const radioName = fieldIndex.replace('radiogroup:', '');
+      const group = radioGroups[radioName] || [];
+      if (group.length > 0) {
+        container.innerHTML = `
+          <div class="mapping-row">
+            <select class="mapping-value mapping-value-radio">
+              ${group.map(r => {
+                const label = getFieldLabel(r);
+                const selected = (r.value === savedValue) ? 'selected' : '';
+                return `<option value="${escapeHtml(r.value)}" ${selected}>${escapeHtml(label)} (${r.value})</option>`;
+              }).join('')}
+            </select>
+          </div>
+        `;
+      }
+      mappingItem.dataset.savedActionType = 'fill';
+      mappingItem.dataset.savedRadioName = radioName;
       return;
     }
 
@@ -284,13 +328,6 @@
         </div>
       `;
       mappingItem.dataset.savedActionType = 'fill';
-    } else if (type === 'radio') {
-      container.innerHTML = `
-        <div class="mapping-row">
-          <span class="radio-hint">Se marcara esta opcion</span>
-        </div>
-      `;
-      mappingItem.dataset.savedActionType = 'fill';
     } else {
       container.innerHTML = `
         <div class="mapping-row">
@@ -322,10 +359,15 @@
             sel.innerHTML = '<option value="">-- Seleccionar campo o boton --</option>' + buildFieldOptions();
 
             if (savedSelector) {
-              const matchIdx = detectedFields.findIndex(f => f.selector === savedSelector);
-              if (matchIdx !== -1) {
-                sel.value = matchIdx.toString();
-                renderValueInput(item, matchIdx.toString(), savedValue);
+              if (savedSelector.startsWith('radiogroup:')) {
+                sel.value = savedSelector;
+                renderValueInput(item, savedSelector, savedValue);
+              } else {
+                const matchIdx = detectedFields.findIndex(f => f.selector === savedSelector);
+                if (matchIdx !== -1) {
+                  sel.value = matchIdx.toString();
+                  renderValueInput(item, matchIdx.toString(), savedValue);
+                }
               }
             }
           });
@@ -353,9 +395,19 @@
       const valueEl = item.querySelector('.mapping-value');
       const value = valueEl ? (valueEl.value || '').trim() : '';
       const savedSelector = item.dataset.savedSelector || '';
-      const actionType = item.dataset.savedActionType || 'fill';
 
-      if (fieldIndex !== '' && detectedFields[fieldIndex]) {
+      if (fieldIndex.startsWith('radiogroup:')) {
+        const radioName = fieldIndex.replace('radiogroup:', '');
+        const radio = detectedFields.find(f => f.type === 'radio' && f.name === radioName && f.value === value);
+        if (radio) {
+          mappings.push({
+            selector: radio.selector,
+            value: radio.value,
+            fieldType: 'radio',
+            actionType: 'fill'
+          });
+        }
+      } else if (fieldIndex !== '' && detectedFields[fieldIndex]) {
         const field = detectedFields[fieldIndex];
         mappings.push({
           selector: field.selector,
@@ -368,7 +420,7 @@
           selector: savedSelector,
           value: item.dataset.savedValue || value,
           fieldType: 'text',
-          actionType: actionType
+          actionType: item.dataset.savedActionType || 'fill'
         });
       }
     });
@@ -467,7 +519,9 @@
       if (e.target.classList.contains('mapping-field-select')) {
         const mappingItem = e.target.closest('.mapping-item');
         const fieldIndex = e.target.value;
-        if (fieldIndex !== '' && detectedFields[fieldIndex]) {
+        if (fieldIndex.startsWith('radiogroup:')) {
+          mappingItem.dataset.savedSelector = fieldIndex;
+        } else if (fieldIndex !== '' && detectedFields[fieldIndex]) {
           mappingItem.dataset.savedSelector = detectedFields[fieldIndex].selector;
         } else {
           mappingItem.dataset.savedSelector = '';
