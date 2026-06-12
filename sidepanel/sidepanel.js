@@ -1,6 +1,7 @@
 (() => {
   let editingProfileId = null;
   let detectedFields = [];
+  let globalDelay = 200;
 
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
@@ -247,7 +248,7 @@
   }
 
   function createMappingHtml(num, savedSelector, savedValue, savedType, savedActionType, savedDelay) {
-    const delayVal = savedDelay !== undefined && savedDelay !== null && savedDelay !== '' ? savedDelay : '';
+    const delayVal = savedDelay !== undefined && savedDelay !== null && savedDelay !== '' ? savedDelay : globalDelay;
     return `
       <div class="mapping-item" draggable="true" data-saved-selector="${escapeHtml(savedSelector || '')}" data-saved-value="${escapeHtml(savedValue || '')}" data-saved-action-type="${escapeHtml(savedActionType || '')}">
         <div class="mapping-header">
@@ -270,7 +271,7 @@
         <div class="mapping-value-container"></div>
         <div class="mapping-row mapping-delay-row">
           <label class="mapping-delay-label">Retraso (ms)</label>
-          <input type="number" class="input input-small mapping-delay" value="${escapeHtml(String(delayVal))}" placeholder="Global" min="0" max="30000">
+          <input type="number" class="input input-small mapping-delay" value="${escapeHtml(String(delayVal))}" min="0" max="30000">
         </div>
       </div>
     `;
@@ -477,13 +478,15 @@
   // Settings
   async function loadSettings() {
     const settings = await Storage.getSettings();
+    globalDelay = settings.fillDelay;
     $('#setting-delay').value = settings.fillDelay;
     $('#setting-sequential').checked = settings.sequential;
   }
 
   async function saveSettings() {
+    globalDelay = parseInt($('#setting-delay').value) || 200;
     await Storage.saveSettings({
-      fillDelay: parseInt($('#setting-delay').value) || 200,
+      fillDelay: globalDelay,
       sequential: $('#setting-sequential').checked
     });
   }
