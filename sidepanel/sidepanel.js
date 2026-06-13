@@ -281,6 +281,37 @@
     return options;
   }
 
+  function createCustomSelectHtml(id, options, selectedValue, cssClass) {
+    const classAttr = cssClass ? ` ${cssClass}` : '';
+    let triggerHtml = '-- Seleccionar --';
+    const match = options.find(o => o.value === selectedValue);
+    if (match) triggerHtml = match.html || escapeHtml(match.label || match.value);
+
+    return `
+      <div class="custom-select${classAttr}" data-id="${id || ''}" data-value="${escapeHtml(selectedValue || '')}">
+        <div class="custom-select-trigger${match ? ' has-value' : ''}">${triggerHtml}</div>
+        <div class="custom-select-options">
+          ${options.map(o => `<div class="custom-option" data-value="${escapeHtml(o.value)}">${o.html || escapeHtml(o.label || o.value)}</div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function setCustomSelectById(container, value) {
+    const sel = container.querySelector('.custom-select');
+    if (!sel) return;
+    sel.dataset.value = value || '';
+    const trigger = sel.querySelector('.custom-select-trigger');
+    const match = sel.querySelector(`.custom-option[data-value="${CSS.escape(String(value || ''))}"]`);
+    if (match) {
+      trigger.innerHTML = match.innerHTML;
+      trigger.classList.add('has-value');
+    } else {
+      trigger.textContent = '-- Seleccionar --';
+      trigger.classList.remove('has-value');
+    }
+  }
+
   function setCustomSelectValue(sel, optionsHtml, value) {
     sel.dataset.value = value || '';
     const trigger = sel.querySelector('.custom-select-trigger');
@@ -341,15 +372,13 @@
       const radioName = fieldIndex.replace('radiogroup:', '');
       const group = radioGroups[radioName] || [];
       if (group.length > 0) {
+        const options = group.map(r => ({
+          value: r.value,
+          html: `<b>${escapeHtml(getFieldLabel(r))}</b> <i>(${escapeHtml(r.value)})</i>`
+        }));
         container.innerHTML = `
           <div class="mapping-row">
-            <select class="mapping-value mapping-value-radio">
-              ${group.map(r => {
-                const label = getFieldLabel(r);
-                const selected = (r.value === savedValue) ? 'selected' : '';
-                return `<option value="${escapeHtml(r.value)}" ${selected}>${escapeHtml(label)} (${r.value})</option>`;
-              }).join('')}
-            </select>
+            ${createCustomSelectHtml('radio-value', options, savedValue, 'mapping-value mapping-value-radio')}
           </div>
         `;
       }
@@ -374,24 +403,25 @@
       `;
       mappingItem.dataset.savedActionType = 'click';
     } else if (type === 'select' && field.options && field.options.length > 0) {
+      const options = field.options.map(opt => ({
+        value: opt.value,
+        html: escapeHtml(opt.text)
+      }));
+      const selVal = savedValue || field.value || '';
       container.innerHTML = `
         <div class="mapping-row">
-          <select class="mapping-value mapping-value-select">
-            ${field.options.map(opt => {
-              const selected = (opt.value === savedValue || opt.text === savedValue) ? 'selected' : '';
-              return `<option value="${escapeHtml(opt.value)}" ${selected}>${escapeHtml(opt.text)}</option>`;
-            }).join('')}
-          </select>
+          ${createCustomSelectHtml('select-value', options, selVal, 'mapping-value mapping-value-select')}
         </div>
       `;
       mappingItem.dataset.savedActionType = 'fill';
     } else if (type === 'checkbox') {
+      const options = [
+        { value: 'true', html: '<b>[CHECK]</b> Marcar (checked) ✓' },
+        { value: 'false', html: '<b>[CHECK]</b> Desmarcar (unchecked)' }
+      ];
       container.innerHTML = `
         <div class="mapping-row">
-          <select class="mapping-value mapping-value-check">
-            <option value="true" ${savedValue === 'true' ? 'selected' : ''}>Marcar (checked)</option>
-            <option value="false" ${savedValue === 'false' ? 'selected' : ''}>Desmarcar (unchecked)</option>
-          </select>
+          ${createCustomSelectHtml('check-value', options, savedValue || 'true', 'mapping-value mapping-value-check')}
         </div>
       `;
       mappingItem.dataset.savedActionType = 'fill';
@@ -464,8 +494,9 @@
     const mappings = [];
     $$('#mappings-list .mapping-item').forEach(item => {
       const fieldIndex = item.querySelector('.mapping-field-select').dataset.value || '';
-      const valueEl = item.querySelector('.mapping-value');
-      const value = valueEl ? (valueEl.value || '').trim() : '';
+      const valueSelect = item.querySelector('.mapping-value-container .custom-select');
+      const valueInput = item.querySelector('.mapping-value-container .mapping-value-text');
+      const value = valueSelect ? (valueSelect.dataset.value || '').trim() : (valueInput ? (valueInput.value || '').trim() : '');
       const savedSelector = item.dataset.savedSelector || '';
       const delayEl = item.querySelector('.mapping-delay');
       const delay = delayEl && delayEl.value !== '' ? parseInt(delayEl.value) : null;
@@ -647,27 +678,26 @@
         sel.querySelector('.custom-select-trigger').classList.add('has-value');
         sel.classList.remove('open');
 
-        if (value.startsWith('radiogroup:')) {
-          mappingItem.dataset.savedSelector = value;
-        } else if (value !== '' && detectedFields[value]) {
-          mappingItem.dataset.savedSelector = detectedFields[value].selector;
+        // Field selector
+        if (sel.classList.contains('mapping-field-select')) {
+          if (value.startsWith('radiogroup:')) {
+            mappingItem.dataset.savedSelector = value;
+          } else if (value !== '' && detectedFields[value]) {
+            mappingItem.dataset.savedSelector = detectedFields[value].selector;
+          } else {
+            mappingItem.dataset.savedSelector = '';
+          }
+          renderValueInput(mappingItem, value, '');
         } else {
-          mappingItem.dataset.savedSelector = '';
+          // Value selector (radio, select, check)
+          mappingItem.dataset.savedValue = value;
         }
-        renderValueInput(mappingItem, value, '');
         return;
       }
 
       // Close open selects when clicking outside
       if (!e.target.closest('.custom-select')) {
         $$('.custom-select.open').forEach(s => s.classList.remove('open'));
-      }
-    });
-
-    $('#mappings-list').addEventListener('input', (e) => {
-      if (e.target.classList.contains('mapping-value')) {
-        const mappingItem = e.target.closest('.mapping-item');
-        mappingItem.dataset.savedValue = e.target.value;
       }
     });
 

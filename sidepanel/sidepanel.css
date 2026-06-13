@@ -373,14 +373,8 @@ body {
   flex: 1;
 }
 
-.mapping-item select {
-  padding: 6px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  font-size: 11px;
-  outline: none;
+.mapping-item .custom-select {
+  flex: 1;
 }
 
 .mapping-field-select {
@@ -480,7 +474,7 @@ body {
 }
 
 .mapping-value-container .input,
-.mapping-value-container select {
+.mapping-value-container .custom-select {
   flex: 1;
 }
 
@@ -488,19 +482,21 @@ body {
 .mapping-value-check,
 .mapping-value-radio {
   width: 100%;
-  padding: 6px 8px;
+}
+
+.mapping-value-container .custom-select-trigger {
+  padding: 6px 24px 6px 8px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
   font-size: 11px;
-  outline: none;
-}
-
-.mapping-value-select:focus,
-.mapping-value-check:focus,
-.mapping-value-radio:focus {
-  border-color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 28px;
+  line-height: 16px;
 }
 
 .radio-hint {
