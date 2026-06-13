@@ -12,50 +12,12 @@ A **browser extension** for Chrome, Edge and Brave that automates form filling w
 
 ## Main Features
 
-### Smart Field Detection
-* **Automatic scanning:** Detects all `<input>`, `<select>`, `<textarea>`, `<button>`, `<input type="submit">` and `[role="button"]` elements on the active page.
-* **Unique selector generation:** Generates robust CSS selectors using `id`, `name`, classes, or `nth-of-type` fallbacks.
-* **Label extraction:** Reads `<label>`, `aria-label`, `aria-labelledby`, and parent label text for human-readable field names.
-* **Auto field type detection:** Identifies text, email, select, checkbox, radio, and button types automatically.
-
-### Intelligent Value Mapping
-* **Select fields:** Shows actual `<option>` values from the page via custom dropdowns — no guesswork, no invalid values.
-* **Radio buttons:** Groups radios by `name` into a single entry with a custom dropdown of all available options.
-* **Checkboxes:** Clear "Check / Uncheck" custom dropdown options.
-* **Buttons:** Detected and available as `[Click]` actions in the sequence.
-* **Text fields:** Free-form input for any text, email, number, password, etc.
-
-### Custom Dropdown Component
-All dropdowns throughout the UI use a custom HTML component (no native `<select>` elements) featuring:
-* **Rich HTML options:** Bold type tags (`[TEXT]`, `[SELECT]`, `[RADIO]`, `[CHECK]`) with italic values.
-* **Text overflow:** Truncation with ellipsis for long field names or values.
-* **Consistent styling:** Dark-themed, keyboard-friendly, matches the rest of the UI.
-
-### Profile Management
-* **Create, edit, delete profiles:** Each profile stores a named sequence of field mappings.
-* **Activate any profile:** One-click activation from the side panel or from recent profiles.
-* **Persistent storage:** Profiles survive browser restarts via `chrome.storage.local`.
-* **Auto-scan on edit:** When editing a profile, the extension automatically scans the page to populate field dropdowns.
-* **Recent profiles:** The last 3 used profiles appear on the main view with relative timestamps (e.g., "hace 5 min") for quick switching.
-
-### Mapping Editor
-* **Drag-and-drop reorder:** Reorder field actions by dragging from the `☰` handle or using the up/down buttons.
-* **Per-action delays:** Each mapping can have its own delay (ms) that overrides the global delay for fine-grained control.
-* **Inline type badges:** Bold type tags on every option make it easy to distinguish text fields from selects, radios, and buttons.
-
-### Execution Engine
-* **Sequential execution:** Fills fields one by one with configurable delay (default 200ms) for framework compatibility.
-* **Parallel execution:** Option to fill all fields simultaneously.
-* **Framework simulation:** Dispatches `input`, `change`, `keydown`, `keyup` events for React, Angular and Vue compatibility.
-* **Native value setters:** Uses prototype property descriptors to bypass framework value trapping.
-* **Button clicks:** Executes `element.click()` on mapped buttons as part of the sequence.
-
-### Side Panel Interface
-* **Always-open side panel:** Stays open while you navigate pages, no need to reopen the popup.
-* **View-based navigation:** Main view, profiles list, profile editor, and settings.
-* **Main view at a glance:** Shows the active profile with an "Activo" badge, the last 3 used profiles, and action buttons.
-* **Real-time feedback:** Toast notifications for success/error states.
-* **Configurable delay:** Adjustable delay between actions (0–5000ms).
+* **Smart field detection:** Auto-scans inputs, selects, textareas, buttons, and radios. Generates CSS selectors and extracts labels. Detects field types automatically.
+* **Custom dropdowns:** All selectors use rich HTML dropdowns with bold type tags (`[TEXT]`, `[SELECT]`, `[RADIO]`, `[CHECK]`) and italic values — no native `<select>` elements.
+* **Profile management:** Create, edit, delete, and activate profiles. Last 3 used profiles show on the main view with relative timestamps. Persistent via `chrome.storage.local`.
+* **Mapping editor:** Drag-and-drop reorder (from `☰` handle), per-action delays, auto-scan on edit.
+* **Execution engine:** Sequential or parallel fill, framework simulation (React/Angular/Vue), native value setters, button clicks.
+* **Side panel UI:** Always-open panel, "Activo" badge on active profile, toast notifications, configurable delay (0–5000ms).
 
 ---
 
@@ -127,28 +89,6 @@ inject-and-fill/
     ├── sidepanel.js               ← View navigation, profile CRUD, custom dropdowns, drag-and-drop, scan/fill logic
     └── storage.js                 ← chrome.storage.local abstraction
 ```
-
----
-
-## Architecture
-
-```text
-┌──────────────────┐      chrome.runtime       ┌──────────────┐      chrome.tabs      ┌────────────────┐
-│  Side Panel UI   │ ──── sendMessage() ──────▶│   Background │ ──── sendMessage() ──▶│ Content Script │
-│ (sidepanel.js)   │ ◀────── response ─────────│ (background) │ ◀───── response ──────│ (content.js)   │
-└──────────────────┘                           └──────────────┘                       └────────────────┘
-                                                     │                                        │
-                                             chrome.scripting                          DOM manipulation
-                                              .executeScript()                     querySelector, .click()
-                                            (inject if needed)                    dispatchEvent, .value=
-```
-
-### Message Flow
-
-1. **Side Panel** sends `{ action: 'detectFields' }` or `{ action: 'fillFields', fields, sequential, delay }` to background.
-2. **Background** queries the active tab, injects the content script if needed via `chrome.scripting.executeScript`, and forwards the message.
-3. **Content Script** executes the action (detect fields, fill form, click button) and sends the response back.
-4. **Background** relays the response to the side panel.
 
 ---
 
