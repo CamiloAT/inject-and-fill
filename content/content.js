@@ -235,7 +235,8 @@
 
     pickOverlay = document.createElement('div');
     pickOverlay.id = '__iaf-pick-overlay';
-    pickOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483646;background:rgba(0,0,0,0.15);cursor:crosshair;';
+    pickOverlay.tabIndex = -1;
+    pickOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483646;background:rgba(0,0,0,0.15);cursor:crosshair;outline:none;';
 
     pickHighlight = document.createElement('div');
     pickHighlight.id = '__iaf-pick-highlight';
@@ -249,6 +250,8 @@
     document.documentElement.appendChild(pickOverlay);
     document.documentElement.appendChild(pickHighlight);
     document.documentElement.appendChild(pickInstructions);
+    if (document.activeElement) document.activeElement.blur();
+    pickOverlay.focus();
 
     pickOverlay.addEventListener('mousemove', onPickMouseMove, true);
     pickOverlay.addEventListener('click', onPickClick, true);
@@ -259,6 +262,7 @@
   function stopPickMode() {
     if (!pickMode) return;
     pickMode = false;
+    if (document.activeElement) document.activeElement.blur();
     if (pickOverlay) { pickOverlay.remove(); pickOverlay = null; }
     if (pickHighlight) { pickHighlight.remove(); pickHighlight = null; }
     if (pickInstructions) { pickInstructions.remove(); pickInstructions = null; }

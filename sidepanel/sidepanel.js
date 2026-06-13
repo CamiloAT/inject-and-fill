@@ -796,10 +796,11 @@
     $('#mappings-list').addEventListener('click', (e) => {
       const pickBtn = e.target.closest('.pick-from-page-btn');
       if (pickBtn) {
+        pickBtn.blur();
         pendingPickItem = pickBtn.closest('.mapping-item');
         chrome.runtime.sendMessage({ action: 'startPickMode' }, (response) => {
           if (response && response.success) {
-            showToast('Toca un elemento en la pagina', 'success');
+            showToast('Toca un elemento en la pagina. ESC para cancelar.', 'success');
           } else {
             showToast('No se pudo activar el selector', 'error');
             pendingPickItem = null;
@@ -927,6 +928,15 @@
     });
     $('#setting-delay').addEventListener('change', saveSettings);
     $('#setting-sequential').addEventListener('change', saveSettings);
+
+    // Global ESC to cancel pick mode from side panel
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && pendingPickItem) {
+        pendingPickItem = null;
+        try { chrome.runtime.sendMessage({ action: 'stopPickMode' }); } catch (err) {}
+        showToast('Selector cancelado', 'success');
+      }
+    });
   }
 
   document.addEventListener('DOMContentLoaded', init);

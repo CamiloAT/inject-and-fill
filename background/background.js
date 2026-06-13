@@ -151,6 +151,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === 'stopPickMode') {
+    getActiveTab().then(async (tab) => {
+      if (!tab) return;
+      await sendToTab(tab.id, { action: 'stopPickMode' });
+    });
+    sendResponse({ success: true });
+    return false;
+  }
+
   return false;
 });
 
