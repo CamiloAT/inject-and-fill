@@ -594,8 +594,13 @@ body {
 
 .mapping-value-select,
 .mapping-value-check,
-.mapping-value-radio {
+.mapping-value-radio,
+.mapping-value-date {
   width: 100%;
+}
+
+.mapping-value-date {
+  color-scheme: dark;
 }
 
 .mapping-value-container .custom-select-trigger {

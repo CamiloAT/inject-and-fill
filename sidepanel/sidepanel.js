@@ -284,6 +284,7 @@
     if (f.tag === 'select') return 'select';
     if (f.type === 'checkbox') return 'checkbox';
     if (f.type === 'radio') return 'radio';
+    if (f.type === 'date' || f.type === 'datetime-local') return 'date';
     return 'text';
   }
 
@@ -501,6 +502,14 @@
       container.innerHTML = `
         <div class="mapping-row">
           ${createCustomSelectHtml('check-value', options, savedValue || 'true', 'mapping-value mapping-value-check')}
+          <span class="mapping-spacer"></span>
+        </div>
+      `;
+      mappingItem.dataset.savedActionType = 'fill';
+    } else if (type === 'date') {
+      container.innerHTML = `
+        <div class="mapping-row">
+          <input type="date" class="input mapping-value mapping-value-date" value="${escapeHtml(savedValue || '')}">
           <span class="mapping-spacer"></span>
         </div>
       `;
