@@ -387,6 +387,86 @@ body {
   width: 100%;
 }
 
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  padding: 6px 24px 6px 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 28px;
+  line-height: 16px;
+}
+
+.custom-select-trigger::after {
+  content: '▾';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.custom-select-trigger.has-value b {
+  color: var(--accent);
+}
+
+.custom-select-trigger.has-value i {
+  color: var(--text-dim);
+}
+
+.custom-select-options {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-top: 2px;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.custom-select.open .custom-select-options {
+  display: block;
+}
+
+.custom-option {
+  padding: 6px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-option:hover {
+  background: var(--bg-hover);
+}
+
+.custom-option b {
+  color: var(--accent);
+}
+
+.custom-option i {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 .mapping-type {
   width: 80px;
   flex-shrink: 0;

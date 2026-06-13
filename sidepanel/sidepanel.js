@@ -184,16 +184,16 @@
           const savedValue = profile && profile.mappings && profile.mappings[i] ? profile.mappings[i].value : '';
           const savedActionType = profile && profile.mappings && profile.mappings[i] ? profile.mappings[i].actionType : '';
 
-          sel.innerHTML = '<option value="">-- Seleccionar campo o boton --</option>' + buildFieldOptions();
+          setCustomSelectValue(sel, buildFieldOptions(), '');
 
           if (savedSelector) {
             if (savedSelector.startsWith('radiogroup:')) {
-              sel.value = savedSelector;
+              setCustomSelectValue(sel, buildFieldOptions(), savedSelector);
               renderValueInput(item, savedSelector, savedValue);
             } else {
               const matchIdx = detectedFields.findIndex(f => f.selector === savedSelector);
               if (matchIdx !== -1) {
-                sel.value = matchIdx.toString();
+                setCustomSelectValue(sel, buildFieldOptions(), matchIdx.toString());
                 renderValueInput(item, matchIdx.toString(), savedValue);
               }
             }
@@ -213,6 +213,25 @@
     if (f.type === 'checkbox') return 'checkbox';
     if (f.type === 'radio') return 'radio';
     return 'text';
+  }
+
+  function getItemLabelHtml(f) {
+    const label = getFieldLabel(f);
+    const type = getFieldType(f);
+    if (type === 'button') return `<b>[BOTON]</b> ${escapeHtml(label)}`;
+    if (type === 'select') {
+      const current = f.options ? f.options.find(o => o.selected) : null;
+      const suffix = current ? ` → <i>"${escapeHtml(current.text)}"</i>` : '';
+      return `<b>[SELECT]</b> ${escapeHtml(label)}${suffix}`;
+    }
+    if (type === 'checkbox') {
+      const suffix = f.checked ? ' ✓' : '';
+      return `<b>[CHECK]</b> ${escapeHtml(label)}${suffix}`;
+    }
+    if (type === 'radio') return `<b>[RADIO]</b> ${escapeHtml(label)} <i>"${escapeHtml(f.value)}"</i>`;
+    const val = f.value || '';
+    const suffix = val ? ` = <i>"${escapeHtml(val)}"</i>` : '';
+    return `<b>[INPUT]</b> ${escapeHtml(label)}${suffix}`;
   }
 
   function getItemLabel(f) {
@@ -251,13 +270,32 @@
 
         const label = f.name || getFieldLabel(f);
         const values = groupRadios.map(r => r.value).join(', ');
-        options += `<option value="radiogroup:${escapeHtml(f.name)}">[RADIO] ${escapeHtml(label)} (${values})</option>`;
+        const html = `<b>[RADIO]</b> ${escapeHtml(label)} <i>(${escapeHtml(values)})</i>`;
+        options += `<div class="custom-option" data-value="radiogroup:${escapeHtml(f.name)}">${html}</div>`;
       } else if (f.type !== 'radio') {
-        options += `<option value="${i}">${escapeHtml(getItemLabel(f))}</option>`;
+        const html = getItemLabelHtml(f);
+        options += `<div class="custom-option" data-value="${i}">${html}</div>`;
       }
     });
 
     return options;
+  }
+
+  function setCustomSelectValue(sel, optionsHtml, value) {
+    sel.dataset.value = value || '';
+    const trigger = sel.querySelector('.custom-select-trigger');
+    const optionsContainer = sel.querySelector('.custom-select-options');
+    optionsContainer.innerHTML = optionsHtml;
+    if (!value && value !== 0) {
+      trigger.textContent = '-- Seleccionar campo o boton --';
+      trigger.classList.remove('has-value');
+    } else {
+      const match = optionsContainer.querySelector(`.custom-option[data-value="${CSS.escape(String(value))}"]`);
+      if (match) {
+        trigger.innerHTML = match.innerHTML;
+        trigger.classList.add('has-value');
+      }
+    }
   }
 
   function createMappingHtml(num, savedSelector, savedValue, savedType, savedActionType, savedDelay) {
@@ -276,10 +314,12 @@
           </div>
         </div>
         <div class="mapping-row">
-          <select class="mapping-field-select">
-            <option value="">-- Seleccionar campo o boton --</option>
-            ${buildFieldOptions()}
-          </select>
+          <div class="custom-select mapping-field-select" data-value="">
+            <div class="custom-select-trigger">-- Seleccionar campo o boton --</div>
+            <div class="custom-select-options">
+              ${buildFieldOptions()}
+            </div>
+          </div>
         </div>
         <div class="mapping-value-container"></div>
         <div class="mapping-row mapping-delay-row">
@@ -383,16 +423,16 @@
             const savedSelector = item.dataset.savedSelector || '';
             const savedValue = item.dataset.savedValue || '';
 
-            sel.innerHTML = '<option value="">-- Seleccionar campo o boton --</option>' + buildFieldOptions();
+            setCustomSelectValue(sel, buildFieldOptions(), '');
 
             if (savedSelector) {
               if (savedSelector.startsWith('radiogroup:')) {
-                sel.value = savedSelector;
+                setCustomSelectValue(sel, buildFieldOptions(), savedSelector);
                 renderValueInput(item, savedSelector, savedValue);
               } else {
                 const matchIdx = detectedFields.findIndex(f => f.selector === savedSelector);
                 if (matchIdx !== -1) {
-                  sel.value = matchIdx.toString();
+                  setCustomSelectValue(sel, buildFieldOptions(), matchIdx.toString());
                   renderValueInput(item, matchIdx.toString(), savedValue);
                 }
               }
@@ -423,7 +463,7 @@
 
     const mappings = [];
     $$('#mappings-list .mapping-item').forEach(item => {
-      const fieldIndex = item.querySelector('.mapping-field-select').value;
+      const fieldIndex = item.querySelector('.mapping-field-select').dataset.value || '';
       const valueEl = item.querySelector('.mapping-value');
       const value = valueEl ? (valueEl.value || '').trim() : '';
       const savedSelector = item.dataset.savedSelector || '';
@@ -585,24 +625,42 @@
         moveMapping(downBtn.closest('.mapping-item'), 'down');
         return;
       }
-    });
 
-    $('#mappings-list').addEventListener('change', (e) => {
-      if (e.target.classList.contains('mapping-field-select')) {
-        const mappingItem = e.target.closest('.mapping-item');
-        const fieldIndex = e.target.value;
-        if (fieldIndex.startsWith('radiogroup:')) {
-          mappingItem.dataset.savedSelector = fieldIndex;
-        } else if (fieldIndex !== '' && detectedFields[fieldIndex]) {
-          mappingItem.dataset.savedSelector = detectedFields[fieldIndex].selector;
+      // Custom select trigger
+      const trigger = e.target.closest('.custom-select-trigger');
+      if (trigger) {
+        const sel = trigger.closest('.custom-select');
+        const wasOpen = sel.classList.contains('open');
+        $$('.custom-select.open').forEach(s => s.classList.remove('open'));
+        if (!wasOpen) sel.classList.add('open');
+        return;
+      }
+
+      // Custom select option
+      const option = e.target.closest('.custom-option');
+      if (option) {
+        const sel = option.closest('.custom-select');
+        const mappingItem = sel.closest('.mapping-item');
+        const value = option.dataset.value;
+        sel.dataset.value = value;
+        sel.querySelector('.custom-select-trigger').innerHTML = option.innerHTML;
+        sel.querySelector('.custom-select-trigger').classList.add('has-value');
+        sel.classList.remove('open');
+
+        if (value.startsWith('radiogroup:')) {
+          mappingItem.dataset.savedSelector = value;
+        } else if (value !== '' && detectedFields[value]) {
+          mappingItem.dataset.savedSelector = detectedFields[value].selector;
         } else {
           mappingItem.dataset.savedSelector = '';
         }
-        renderValueInput(mappingItem, fieldIndex, '');
+        renderValueInput(mappingItem, value, '');
+        return;
       }
-      if (e.target.classList.contains('mapping-value')) {
-        const mappingItem = e.target.closest('.mapping-item');
-        mappingItem.dataset.savedValue = e.target.value;
+
+      // Close open selects when clicking outside
+      if (!e.target.closest('.custom-select')) {
+        $$('.custom-select.open').forEach(s => s.classList.remove('open'));
       }
     });
 
