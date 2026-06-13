@@ -89,11 +89,17 @@
     </div>
     <div class="settings-form">
       <div class="setting-row">
-        <label>Retraso entre campos (ms)</label>
-        <input type="number" id="setting-delay" class="input input-small" value="200" min="0" max="5000">
+        <div class="setting-info">
+          <label>Retraso entre campos (ms)</label>
+          <span class="setting-desc">Tiempo de espera entre cada accion al rellenar</span>
+        </div>
+        <input type="number" id="setting-delay" class="input setting-delay-input" value="200" min="0" max="5000">
       </div>
       <div class="setting-row">
-        <label>Rellenar secuencialmente</label>
+        <div class="setting-info">
+          <label>Rellenar uno por uno</label>
+          <span class="setting-desc">Si esta activo, cada campo se rellena despues del anterior con el retraso configurado. Si esta desactivado, todos se rellenan al mismo tiempo.</span>
+        </div>
         <input type="checkbox" id="setting-sequential" checked>
       </div>
     </div>

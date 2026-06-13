@@ -383,6 +383,37 @@ body {
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
+  gap: 12px;
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.setting-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.setting-delay-input {
+  width: 65px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.setting-delay-input::-webkit-inner-spin-button,
+.setting-delay-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.setting-delay-input {
+  -moz-appearance: textfield;
 }
 
 .setting-row:last-child {
