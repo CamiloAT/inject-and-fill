@@ -32,6 +32,7 @@
 
     if (!activeId) {
       display.innerHTML = '<span class="no-profile">Ningun perfil seleccionado</span>';
+      renderRecentProfiles();
       return;
     }
 
@@ -40,6 +41,7 @@
 
     if (!profile) {
       display.innerHTML = '<span class="no-profile">Ningun perfil seleccionado</span>';
+      renderRecentProfiles();
       return;
     }
 
@@ -52,10 +54,77 @@
     if (!countText) countText = '0 acciones';
 
     display.innerHTML = `
+      <span class="active-badge">Activo</span>
       <div class="profile-name">${escapeHtml(profile.name)}</div>
       ${profile.description ? `<div class="profile-desc">${escapeHtml(profile.description)}</div>` : ''}
       <div class="profile-count">${countText}</div>
     `;
+
+    renderRecentProfiles();
+  }
+
+  async function renderRecentProfiles() {
+    const activeId = await Storage.getActiveProfile();
+    const profiles = await Storage.getProfiles();
+    const section = $('#recent-section');
+    const container = $('#recent-profiles');
+
+    const recent = profiles
+      .filter(p => p.id !== activeId && p.lastUsed)
+      .sort((a, b) => (b.lastUsed || 0) - (a.lastUsed || 0))
+      .slice(0, 3);
+
+    if (recent.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+    container.innerHTML = recent.map(p => {
+      const fieldCount = p.mappings ? p.mappings.filter(m => m.actionType !== 'click').length : 0;
+      const clickCount = p.mappings ? p.mappings.filter(m => m.actionType === 'click').length : 0;
+      let countText = '';
+      if (fieldCount > 0) countText += `${fieldCount} campos`;
+      if (fieldCount > 0 && clickCount > 0) countText += ' + ';
+      if (clickCount > 0) countText += `${clickCount} clicks`;
+      if (!countText) countText = '0 acciones';
+
+      const timeAgo = getTimeAgo(p.lastUsed);
+
+      return `
+        <div class="recent-profile" data-id="${p.id}">
+          <div class="recent-profile-name">${escapeHtml(p.name)}</div>
+          <div class="recent-profile-count">${countText}</div>
+          <div class="recent-profile-time">${timeAgo}</div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.recent-profile').forEach(card => {
+      card.addEventListener('click', async () => {
+        await Storage.setActiveProfile(card.dataset.id);
+        await updateLastUsed(card.dataset.id);
+        showToast('Perfil activado', 'success');
+        renderActiveProfile();
+      });
+    });
+  }
+
+  function getTimeAgo(timestamp) {
+    if (!timestamp) return '';
+    const diff = Date.now() - new Date(timestamp).getTime();
+    const seconds = Math.floor(diff / 1000);
+    if (seconds < 60) return 'hace un momento';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `hace ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `hace ${hours}h`;
+    const days = Math.floor(hours / 24);
+    return `hace ${days}d`;
+  }
+
+  async function updateLastUsed(id) {
+    await Storage.updateProfile(id, { lastUsed: new Date().toISOString() });
   }
 
   async function fillActiveProfile() {
@@ -93,6 +162,7 @@
         const success = response.results.filter(r => r.success).length;
         const failed = response.results.filter(r => !r.success).length;
         showToast(`Ejecutados: ${success} | Fallidos: ${failed}`, success > 0 ? 'success' : 'error');
+        await updateLastUsed(activeId);
       }
     } catch (err) {
       showToast('Error al ejecutar', 'error');
@@ -127,6 +197,7 @@
       card.addEventListener('click', async (e) => {
         if (e.target.closest('.edit-profile-btn') || e.target.closest('.delete-profile-btn')) return;
         await Storage.setActiveProfile(card.dataset.id);
+        await updateLastUsed(card.dataset.id);
         showToast('Perfil activado', 'success');
         renderProfiles();
         renderActiveProfile();
@@ -548,7 +619,8 @@
       const profile = await Storage.addProfile({
         name,
         description: $('#profile-desc').value.trim(),
-        mappings
+        mappings,
+        lastUsed: new Date().toISOString()
       });
       await Storage.setActiveProfile(profile.id);
     }

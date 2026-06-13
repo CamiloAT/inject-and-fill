@@ -131,14 +131,30 @@ body {
 .profile-display {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
   border-radius: var(--radius);
   padding: 12px;
   cursor: pointer;
   transition: border-color 0.15s;
+  position: relative;
 }
 
 .profile-display:hover {
   border-color: var(--accent);
+}
+
+.active-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .profile-name {
@@ -161,6 +177,51 @@ body {
 .no-profile {
   color: var(--text-dim);
   font-size: 12px;
+}
+
+.recent-profiles {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
+}
+
+.recent-profile {
+  flex: 0 0 auto;
+  width: 170px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  scroll-snap-align: start;
+}
+
+.recent-profile:hover {
+  border-color: var(--accent);
+}
+
+.recent-profile-name {
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.recent-profile-count {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.recent-profile-time {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 .actions {

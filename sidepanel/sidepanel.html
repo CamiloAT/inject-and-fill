@@ -21,11 +21,18 @@
     <div class="section">
       <div class="section-header">
         <span class="section-label">Perfil Activo</span>
-        <button id="btn-manage-profiles" class="link-btn">Gestionar</button>
+        <button id="btn-manage-profiles" class="link-btn">Gestionar Perfiles</button>
       </div>
       <div id="active-profile-display" class="profile-display">
         <span class="no-profile">Ningun perfil seleccionado</span>
       </div>
+    </div>
+
+    <div class="section" id="recent-section" style="display:none;">
+      <div class="section-header">
+        <span class="section-label">Usados Recientemente</span>
+      </div>
+      <div id="recent-profiles" class="recent-profiles"></div>
     </div>
 
     <div class="actions">
@@ -33,8 +40,8 @@
         <span>&#9654;</span> Rellenar Formulario
       </button>
       <div class="actions-row">
-        <button id="btn-reload" class="btn btn-secondary">&#8635; Recargar</button>
-        <button id="btn-reload-nocache" class="btn btn-secondary">&#9881; Sin Cache</button>
+        <button id="btn-reload" class="btn btn-secondary">&#8635; Recargar Pagina</button>
+        <button id="btn-reload-nocache" class="btn btn-secondary">&#9881; Recargar Sin Cache</button>
       </div>
     </div>
   </div>
