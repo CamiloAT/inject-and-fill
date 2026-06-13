@@ -355,7 +355,7 @@
 
   function createCustomSelectHtml(id, options, selectedValue, cssClass) {
     const classAttr = cssClass ? ` ${cssClass}` : '';
-    let triggerHtml = '-- Seleccionar --';
+    let triggerHtml = '<span class="custom-select-placeholder">-- Seleccionar --</span>';
     const match = options.find(o => o.value === selectedValue);
     if (match) triggerHtml = match.html || escapeHtml(match.label || match.value);
 
@@ -418,7 +418,7 @@
         </div>
         <div class="mapping-row">
           <div class="custom-select mapping-field-select" data-value="">
-            <div class="custom-select-trigger">-- Seleccionar campo o boton --</div>
+            <div class="custom-select-trigger"><span class="custom-select-placeholder">-- Seleccionar campo o boton --</span></div>
             <div class="custom-select-options">
               ${buildFieldOptions()}
             </div>
@@ -428,7 +428,8 @@
         <div class="mapping-value-container"></div>
         <div class="mapping-row mapping-delay-row">
           <label class="mapping-delay-label">Retraso (ms)</label>
-          <input type="number" class="input input-small mapping-delay" value="${escapeHtml(String(delayVal))}" min="0" max="30000">
+          <input type="number" class="input mapping-delay" value="${escapeHtml(String(delayVal))}" min="0" max="30000">
+          <span class="mapping-spacer"></span>
         </div>
       </div>
     `;
@@ -447,11 +448,12 @@
       if (group.length > 0) {
         const options = group.map(r => ({
           value: r.value,
-          html: `<b>${escapeHtml(getFieldLabel(r))}</b> <i>(${escapeHtml(r.value)})</i>`
+          html: `${escapeHtml(getFieldLabel(r))} <i>(${escapeHtml(r.value)})</i>`
         }));
         container.innerHTML = `
           <div class="mapping-row">
             ${createCustomSelectHtml('radio-value', options, savedValue, 'mapping-value mapping-value-radio')}
+            <span class="mapping-spacer"></span>
           </div>
         `;
       }
@@ -472,29 +474,34 @@
       container.innerHTML = `
         <div class="mapping-row">
           <span class="click-hint">Hara click en este elemento</span>
+          <span class="mapping-spacer"></span>
         </div>
       `;
       mappingItem.dataset.savedActionType = 'click';
     } else if (type === 'select' && field.options && field.options.length > 0) {
       const options = field.options.map(opt => ({
         value: opt.value,
-        html: escapeHtml(opt.text)
+        html: opt.value === '' || opt.text === opt.value
+          ? `<i style="color:var(--text-dim)">${escapeHtml(opt.text)}</i>`
+          : escapeHtml(opt.text)
       }));
       const selVal = savedValue || field.value || '';
       container.innerHTML = `
         <div class="mapping-row">
           ${createCustomSelectHtml('select-value', options, selVal, 'mapping-value mapping-value-select')}
+          <span class="mapping-spacer"></span>
         </div>
       `;
       mappingItem.dataset.savedActionType = 'fill';
     } else if (type === 'checkbox') {
       const options = [
-        { value: 'true', html: '<b>[CHECK]</b> Marcar (checked) ✓' },
-        { value: 'false', html: '<b>[CHECK]</b> Desmarcar (unchecked)' }
+        { value: 'true', html: 'Marcar <span style="color:var(--success)">✓</span>' },
+        { value: 'false', html: 'No marcar <span style="color:var(--danger)">✗</span>' }
       ];
       container.innerHTML = `
         <div class="mapping-row">
           ${createCustomSelectHtml('check-value', options, savedValue || 'true', 'mapping-value mapping-value-check')}
+          <span class="mapping-spacer"></span>
         </div>
       `;
       mappingItem.dataset.savedActionType = 'fill';
@@ -502,6 +509,7 @@
       container.innerHTML = `
         <div class="mapping-row">
           <input type="text" class="input mapping-value mapping-value-text" value="${escapeHtml(savedValue || '')}" placeholder="Valor a rellenar">
+          <span class="mapping-spacer"></span>
         </div>
       `;
       mappingItem.dataset.savedActionType = 'fill';

@@ -432,14 +432,12 @@ body {
 
 .mapping-item .input {
   flex: 1;
+  min-width: 0;
 }
 
 .mapping-item .custom-select {
   flex: 1;
-}
-
-.mapping-field-select {
-  width: 100%;
+  min-width: 0;
 }
 
 .pick-from-page-btn {
@@ -453,6 +451,11 @@ body {
   color: #fff;
   background: var(--accent);
   border-radius: 4px;
+}
+
+.mapping-spacer {
+  width: 26px;
+  flex-shrink: 0;
 }
 
 .custom-select {
@@ -492,6 +495,11 @@ body {
 
 .custom-select-trigger.has-value i {
   color: var(--text-dim);
+}
+
+.custom-select-placeholder {
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 .custom-select-options {
@@ -550,6 +558,7 @@ body {
 .mapping-value-container .input,
 .mapping-value-container .custom-select {
   flex: 1;
+  min-width: 0;
 }
 
 .mapping-value-select,
@@ -570,6 +579,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   min-height: 28px;
+  max-width: 100%;
   line-height: 16px;
 }
 
@@ -596,8 +606,22 @@ body {
 }
 
 .mapping-delay {
-  width: 70px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.mapping-delay::-webkit-inner-spin-button,
+.mapping-delay::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.mapping-delay {
+  -moz-appearance: textfield;
 }
 
 .mapping-item .mapping-header {
