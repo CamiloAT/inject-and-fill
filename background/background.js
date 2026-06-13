@@ -135,4 +135,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+
+  if (message.action === 'startPickMode') {
+    getActiveTab().then(async (tab) => {
+      if (!tab) { sendResponse({ success: false, error: 'No active tab' }); return; }
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content/content.js']
+        });
+      } catch (e) {}
+      const response = await sendToTab(tab.id, { action: 'startPickMode' });
+      sendResponse(response || { success: false });
+    });
+    return true;
+  }
+
+  return false;
+});
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.action === 'elementPicked' || message.action === 'pickCancelled') {
+    try { chrome.runtime.sendMessage(message); } catch (e) {}
+  }
 });

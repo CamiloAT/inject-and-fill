@@ -442,6 +442,19 @@ body {
   width: 100%;
 }
 
+.pick-from-page-btn {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 14px;
+  padding: 4px 6px;
+}
+
+.pick-from-page-btn:hover {
+  color: #fff;
+  background: var(--accent);
+  border-radius: 4px;
+}
+
 .custom-select {
   position: relative;
   width: 100%;

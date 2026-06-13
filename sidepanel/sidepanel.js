@@ -2,6 +2,7 @@
   let editingProfileId = null;
   let detectedFields = [];
   let globalDelay = 200;
+  let pendingPickItem = null;
 
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
@@ -422,6 +423,7 @@
               ${buildFieldOptions()}
             </div>
           </div>
+          <button class="icon-btn pick-from-page-btn" title="Elegir de la pagina">&#8853;</button>
         </div>
         <div class="mapping-value-container"></div>
         <div class="mapping-row mapping-delay-row">
@@ -670,6 +672,86 @@
     renderActiveProfile();
     loadSettings();
 
+    // Listen for pick mode results from content script
+    chrome.runtime.onMessage.addListener((message) => {
+      try {
+        if (message.action === 'elementPicked' && message.data) {
+        const data = message.data;
+        const item = pendingPickItem;
+        if (!item) return;
+
+        if (data.radioGroup) {
+          const group = data.radioGroup;
+          group.radios.forEach(r => {
+            detectedFields.push({
+              index: detectedFields.length,
+              selector: r.selector,
+              tag: 'input',
+              type: 'radio',
+              category: 'field',
+              name: group.name,
+              id: '',
+              placeholder: '',
+              label: r.label,
+              value: r.value,
+              checked: false,
+              disabled: false,
+              options: []
+            });
+          });
+
+          const sel = item.querySelector('.mapping-field-select');
+          const values = group.radios.map(r => r.value).join(', ');
+          const html = `<b>[RADIO]</b> ${escapeHtml(group.name)} <i>(${escapeHtml(values)})</i>`;
+          sel.innerHTML = `
+            <div class="custom-select-trigger has-value">${html}</div>
+            <div class="custom-select-options">${buildFieldOptions()}</div>
+          `;
+          sel.dataset.value = `radiogroup:${group.name}`;
+          item.dataset.savedSelector = `radiogroup:${group.name}`;
+
+          renderValueInput(item, `radiogroup:${group.name}`, '');
+        } else {
+          const pickedField = {
+            index: detectedFields.length,
+            selector: data.selector,
+            tag: data.tag,
+            type: data.type,
+            category: data.type === 'button' ? 'button' : 'field',
+            name: '',
+            id: '',
+            placeholder: '',
+            label: data.label,
+            value: '',
+            checked: false,
+            disabled: false,
+            options: data.options || []
+          };
+          detectedFields.push(pickedField);
+          const newIndex = detectedFields.length - 1;
+
+          const sel = item.querySelector('.mapping-field-select');
+          const optionHtml = getItemLabelHtml(pickedField);
+          sel.innerHTML = `
+            <div class="custom-select-trigger has-value">${optionHtml}</div>
+            <div class="custom-select-options">${buildFieldOptions()}</div>
+          `;
+          sel.dataset.value = String(newIndex);
+          item.dataset.savedSelector = data.selector;
+
+          renderValueInput(item, String(newIndex), '');
+        }
+
+        pendingPickItem = null;
+        showToast('Elemento seleccionado', 'success');
+      }
+      if (message.action === 'pickCancelled') {
+        pendingPickItem = null;
+        showToast('Selector cancelado', 'success');
+      }
+      } catch (e) {}
+    });
+
     // Main view
     $('#btn-fill').addEventListener('click', fillActiveProfile);
     $('#btn-reload').addEventListener('click', () => {
@@ -712,6 +794,20 @@
 
     // Delegated events on mappings-list
     $('#mappings-list').addEventListener('click', (e) => {
+      const pickBtn = e.target.closest('.pick-from-page-btn');
+      if (pickBtn) {
+        pendingPickItem = pickBtn.closest('.mapping-item');
+        chrome.runtime.sendMessage({ action: 'startPickMode' }, (response) => {
+          if (response && response.success) {
+            showToast('Toca un elemento en la pagina', 'success');
+          } else {
+            showToast('No se pudo activar el selector', 'error');
+            pendingPickItem = null;
+          }
+        });
+        return;
+      }
+
       const removeBtn = e.target.closest('.remove-mapping-btn');
       if (removeBtn) {
         removeBtn.closest('.mapping-item').remove();

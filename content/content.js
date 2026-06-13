@@ -3,6 +3,10 @@
   window.__injectAndFillLoaded = true;
 
   let observer = null;
+  let pickMode = false;
+  let pickOverlay = null;
+  let pickHighlight = null;
+  let pickInstructions = null;
 
   function getFieldSelector(el) {
     if (el.id) return `#${CSS.escape(el.id)}`;
@@ -225,6 +229,124 @@
     return fields;
   }
 
+  function startPickMode() {
+    if (pickMode) return;
+    pickMode = true;
+
+    pickOverlay = document.createElement('div');
+    pickOverlay.id = '__iaf-pick-overlay';
+    pickOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483646;background:rgba(0,0,0,0.15);cursor:crosshair;';
+
+    pickHighlight = document.createElement('div');
+    pickHighlight.id = '__iaf-pick-highlight';
+    pickHighlight.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:2px solid #4a9eff;background:rgba(74,158,255,0.1);border-radius:3px;transition:none;display:none;';
+
+    pickInstructions = document.createElement('div');
+    pickInstructions.id = '__iaf-pick-instructions';
+    pickInstructions.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2147483647;background:#1e1e2e;color:#e0e0e0;padding:10px 18px;border-radius:8px;font-size:13px;font-family:system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,0.4);border:1px solid #3a3a4f;white-space:nowrap;';
+    pickInstructions.textContent = 'Haz clic en un elemento. ESC para cancelar.';
+
+    document.documentElement.appendChild(pickOverlay);
+    document.documentElement.appendChild(pickHighlight);
+    document.documentElement.appendChild(pickInstructions);
+
+    pickOverlay.addEventListener('mousemove', onPickMouseMove, true);
+    pickOverlay.addEventListener('click', onPickClick, true);
+    document.addEventListener('keydown', onPickKeydown, true);
+  }
+
+  function stopPickMode() {
+    if (!pickMode) return;
+    pickMode = false;
+    if (pickOverlay) { pickOverlay.remove(); pickOverlay = null; }
+    if (pickHighlight) { pickHighlight.remove(); pickHighlight = null; }
+    if (pickInstructions) { pickInstructions.remove(); pickInstructions = null; }
+    document.removeEventListener('mousemove', onPickMouseMove, true);
+    document.removeEventListener('click', onPickClick, true);
+    document.removeEventListener('keydown', onPickKeydown, true);
+  }
+
+  function onPickMouseMove(e) {
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el || el === pickOverlay || el === pickInstructions || el === document.documentElement || el === document.body) {
+      pickHighlight.style.display = 'none';
+      return;
+    }
+    const tag = el.tagName.toLowerCase();
+    const role = el.getAttribute('role') || '';
+    const validTags = ['input', 'select', 'textarea', 'button'];
+    const validRoles = ['textbox', 'combobox', 'checkbox', 'radio', 'button'];
+    const isValid = validTags.includes(tag) || validRoles.includes(role);
+
+    const rect = el.getBoundingClientRect();
+    pickHighlight.style.display = 'block';
+    pickHighlight.style.left = rect.left + 'px';
+    pickHighlight.style.top = rect.top + 'px';
+    pickHighlight.style.width = rect.width + 'px';
+    pickHighlight.style.height = rect.height + 'px';
+    pickHighlight.style.borderColor = isValid ? '#4a9eff' : '#ef5350';
+    pickHighlight.style.background = isValid ? 'rgba(74,158,255,0.1)' : 'rgba(239,83,80,0.08)';
+  }
+
+  function onPickClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    pickOverlay.style.pointerEvents = 'none';
+    pickHighlight.style.display = 'none';
+    pickInstructions.style.display = 'none';
+
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+
+    pickOverlay.style.pointerEvents = '';
+    pickInstructions.style.display = '';
+
+    if (!el || el === pickOverlay || el === pickInstructions || el === document.documentElement || el === document.body) return;
+
+    const tag = el.tagName.toLowerCase();
+    const type = (el.type || '').toLowerCase();
+    const validTags = ['input', 'select', 'textarea', 'button'];
+    const validRoles = ['textbox', 'combobox', 'checkbox', 'radio', 'button'];
+    const role = el.getAttribute('role') || '';
+    if (!validTags.includes(tag) && !validRoles.includes(role)) return;
+
+    const selector = getFieldSelector(el);
+    const label = getElementLabel(el);
+    const fieldType = tag === 'select' ? 'select' : tag === 'button' ? 'button' : type || tag;
+
+    let options = [];
+    if (tag === 'select') {
+      options = Array.from(el.options).map(opt => ({ value: opt.value, text: opt.text }));
+    }
+
+    let radioGroup = null;
+    if (type === 'radio' && el.name) {
+      const group = document.querySelectorAll(`input[type="radio"][name="${CSS.escape(el.name)}"]`);
+      radioGroup = {
+        name: el.name,
+        radios: Array.from(group).map(r => ({
+          selector: getFieldSelector(r),
+          label: getElementLabel(r),
+          value: r.value
+        }))
+      };
+    }
+
+    stopPickMode();
+
+    chrome.runtime.sendMessage({
+      action: 'elementPicked',
+      data: { selector, label, tag, type: fieldType, options, radioGroup }
+    });
+  }
+
+  function onPickKeydown(e) {
+    if (e.key === 'Escape') {
+      stopPickMode();
+      chrome.runtime.sendMessage({ action: 'pickCancelled' });
+    }
+  }
+
   async function executeSequence(actions, globalDelay) {
     const results = [];
     for (const action of actions) {
@@ -289,6 +411,16 @@
         observer.disconnect();
         observer = null;
       }
+      sendResponse({ success: true });
+    }
+
+    if (message.action === 'startPickMode') {
+      startPickMode();
+      sendResponse({ success: true });
+    }
+
+    if (message.action === 'stopPickMode') {
+      stopPickMode();
       sendResponse({ success: true });
     }
   });
