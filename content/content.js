@@ -243,8 +243,8 @@
 
     pickInstructions = document.createElement('div');
     pickInstructions.id = '__iaf-pick-instructions';
-    pickInstructions.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2147483647;background:#1e1e2e;color:#e0e0e0;padding:10px 18px;border-radius:8px;font-size:13px;font-family:system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,0.4);border:1px solid #3a3a4f;white-space:nowrap;';
-    pickInstructions.textContent = 'Haz clic en un elemento. ESC para cancelar.';
+    pickInstructions.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:2147483647;background:#1e1e2e;padding:10px 18px;border-radius:8px;font-size:13px;font-family:system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,0.4);border:1px solid #3a3a4f;white-space:nowrap;text-align:center;line-height:1.6;';
+    pickInstructions.innerHTML = '<div style="color:#e0e0e0;">Haz clic en un elemento. <span style="color:#888;">ESC para cancelar.</span></div><div id="__iaf-pick-status" style="color:#888;">No se ha detectado elemento</div>';
 
     document.documentElement.appendChild(pickOverlay);
     document.documentElement.appendChild(pickHighlight);
@@ -253,6 +253,7 @@
     pickOverlay.addEventListener('mousemove', onPickMouseMove, true);
     pickOverlay.addEventListener('click', onPickClick, true);
     document.addEventListener('keydown', onPickKeydown, true);
+    pickOverlay.addEventListener('keydown', onPickKeydown, true);
   }
 
   function stopPickMode() {
@@ -267,9 +268,18 @@
   }
 
   function onPickMouseMove(e) {
+    pickOverlay.style.pointerEvents = 'none';
+    pickHighlight.style.display = 'none';
     const el = document.elementFromPoint(e.clientX, e.clientY);
+    pickOverlay.style.pointerEvents = '';
+
+    const status = pickInstructions.querySelector('#__iaf-pick-status');
+    if (!status) return;
+
     if (!el || el === pickOverlay || el === pickInstructions || el === document.documentElement || el === document.body) {
       pickHighlight.style.display = 'none';
+      status.textContent = 'No se ha detectado elemento';
+      status.style.color = '#888';
       return;
     }
     const tag = el.tagName.toLowerCase();
@@ -286,6 +296,16 @@
     pickHighlight.style.height = rect.height + 'px';
     pickHighlight.style.borderColor = isValid ? '#4a9eff' : '#ef5350';
     pickHighlight.style.background = isValid ? 'rgba(74,158,255,0.1)' : 'rgba(239,83,80,0.08)';
+
+    if (isValid) {
+      const label = getElementLabel(el) || el.placeholder || el.name || el.id || tag;
+      const type = el.type ? `[${el.type}]` : `[${tag}]`;
+      status.textContent = `${type} ${label}`;
+      status.style.color = '#4caf50';
+    } else {
+      status.textContent = 'Elemento no valido — no es un campo de formulario';
+      status.style.color = '#ef5350';
+    }
   }
 
   function onPickClick(e) {
@@ -334,16 +354,18 @@
 
     stopPickMode();
 
-    chrome.runtime.sendMessage({
-      action: 'elementPicked',
-      data: { selector, label, tag, type: fieldType, options, radioGroup }
-    });
+    try {
+      chrome.runtime.sendMessage({
+        action: 'elementPicked',
+        data: { selector, label, tag, type: fieldType, options, radioGroup }
+      });
+    } catch (e) {}
   }
 
   function onPickKeydown(e) {
     if (e.key === 'Escape') {
       stopPickMode();
-      chrome.runtime.sendMessage({ action: 'pickCancelled' });
+      try { chrome.runtime.sendMessage({ action: 'pickCancelled' }); } catch (e) {}
     }
   }
 
