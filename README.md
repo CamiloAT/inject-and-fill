@@ -13,11 +13,12 @@ A **browser extension** for Chrome, Edge and Brave that automates form filling w
 ## Main Features
 
 * **Smart field detection:** Auto-scans inputs, selects, textareas, buttons, and radios. Generates CSS selectors and extracts labels. Detects field types automatically.
+* **Visual element picker:** Click ⊕ to pick any form element directly from the page — overlay highlights valid elements in blue, invalid in red, with live feedback.
 * **Custom dropdowns:** All selectors use rich HTML dropdowns with bold type tags (`[TEXT]`, `[SELECT]`, `[RADIO]`, `[CHECK]`) and italic values — no native `<select>` elements.
 * **Profile management:** Create, edit, delete, and activate profiles. Last 3 used profiles show on the main view with relative timestamps. Persistent via `chrome.storage.local`.
-* **Mapping editor:** Drag-and-drop reorder (from `☰` handle), per-action delays, auto-scan on edit.
-* **Execution engine:** Sequential or parallel fill, framework simulation (React/Angular/Vue), native value setters, button clicks.
-* **Side panel UI:** Always-open panel, "Activo" badge on active profile, toast notifications, configurable delay (0–5000ms).
+* **Mapping editor:** Drag-and-drop reorder (from `☰` handle), per-action delays, auto-scan on edit, pick from page button.
+* **Execution engine:** Sequential (one-by-one with configurable delay) or simultaneous fill, framework simulation (React/Angular/Vue), native value setters, button clicks.
+* **Side panel UI:** Always-open panel, "Activo" badge on active profile, toast notifications, configurable settings with descriptions.
 
 ---
 
@@ -27,8 +28,8 @@ A **browser extension** for Chrome, Edge and Brave that automates form filling w
 |------|-------------|
 | **Main** | Active profile card with "Activo" badge, recent profiles (horizontal scroll), fill/reload buttons |
 | **Profiles** | List all profiles with activate / edit / delete actions |
-| **Editor** | Name, description, scan page, map fields with custom dropdowns, per-action delays, drag-and-drop reorder |
-| **Settings** | Delay between fields, sequential mode toggle |
+| **Editor** | Name, description, scan page, map fields with custom dropdowns, per-action delays, drag-and-drop reorder, pick from page |
+| **Settings** | Delay between fields with description, sequential mode with explanation of each behavior |
 
 ---
 
@@ -55,7 +56,7 @@ cd inject-and-fill
 1. Navigate to any page with a form.
 2. Click the extension icon to open the side panel.
 3. Go to **Gestionar Perfiles** → **+** to create a new profile.
-4. Click **Escanear pagina** to detect form fields and buttons.
+4. Click **Escanear pagina** to detect form fields, or use **⊕** to pick elements directly from the page.
 5. Select fields from the custom dropdown and assign values.
 6. Save and activate the profile.
 7. Click **Rellenar Formulario** to execute.
@@ -96,12 +97,12 @@ inject-and-fill/
 
 | Type | Detection | Value Input | Execution |
 |------|-----------|-------------|-----------|
-| Text / Email / Tel / Number / Password / URL | `<input type="text">` etc. | Free text input | `nativeSetter` + `input`/`change` events |
-| Select | `<select>` | Custom dropdown with real `<option>` values | `.value =` + `change` event |
-| Checkbox | `<input type="checkbox">` | Custom dropdown: Checked / Unchecked | `.checked =` + `change`/`click` events |
+| Text / Email / Tel / Number / Password / URL | `<input type="text">` etc. | Free text input or pick from page | `nativeSetter` + `input`/`change` events |
+| Select | `<select>` | Custom dropdown with real `<option>` values, placeholder in italic | `.value =` + `change` event |
+| Checkbox | `<input type="checkbox">` | Custom dropdown: Marcar ✓ / No marcar ✗ | `.checked =` + `change`/`click` events |
 | Radio | `<input type="radio">` | Custom dropdown grouped by `name` | Find by value in group + `change`/`click` |
-| Textarea | `<textarea>` | Free text input | `nativeSetter` + `input`/`change` events |
-| Button | `<button>`, `<input type="submit">`, `[role="button"]` | "Will click on this element" | `.click()` |
+| Textarea | `<textarea>` | Free text input or pick from page | `nativeSetter` + `input`/`change` events |
+| Button | `<button>`, `<input type="submit">`, `[role="button"]` | "Hara click en este elemento" | `.click()` |
 
 ---
 
