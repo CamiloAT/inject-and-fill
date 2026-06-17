@@ -1,10 +1,10 @@
 # Inject and Fill
 
-![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)
-![Manifest V3](https://img.shields.io/badge/Manifest_V3-34A853?style=for-the-badge&logo=google-chrome&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+[![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-V3-4285F4?style=flat&logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/)
+[![Manifest V3](https://img.shields.io/badge/Manifest_V3-V3-34A853?style=flat&logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E?style=flat&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![HTML5](https://img.shields.io/badge/HTML5-5-E34F26?style=flat&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/CSS3-3-1572B6?style=flat&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 
 A **browser extension** for Chrome, Edge and Brave that automates form filling with custom profiles. It detects form fields and buttons on any web page, lets you map them to specific values, and executes the entire sequence with a single click — supporting text inputs, selects, checkboxes, radio buttons, and button clicks.
 
@@ -109,11 +109,11 @@ inject-and-fill/
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
+|------|------------|
 | Extension API | Chrome Manifest V3 |
-| Background | Service Worker (`background.js`) |
+| Backend | Service Worker (`background.js`) |
 | Content Script | Vanilla JavaScript, DOM API |
-| Side Panel UI | Vanilla HTML/CSS/JS, custom dropdown component |
+| Frontend | Side Panel UI: Vanilla HTML/CSS/JS, custom dropdown component |
 | Storage | `chrome.storage.local` |
 | Script Injection | `chrome.scripting.executeScript` |
 | Tab Actions | `chrome.tabs.reload`, `chrome.tabs.update` |
@@ -134,6 +134,8 @@ inject-and-fill/
 
 ## Authors
 
-* **Arias Tenjo Camilo Andres**
+| Name | GitHub |
+|---|---|
+| **Camilo Andres Arias Tenjo** | [@CamiloAT](https://github.com/CamiloAT) |
 
 *Browser Extension Development*
