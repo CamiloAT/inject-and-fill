@@ -3,6 +3,7 @@
   let detectedFields = [];
   let globalDelay = 200;
   let pendingPickItem = null;
+  let fillInProgress = false;
 
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
@@ -19,6 +20,50 @@
     toast.textContent = msg;
     toast.className = `toast ${type}`;
     setTimeout(() => toast.classList.add('hidden'), 2000);
+  }
+
+  function showFillOverlay(total) {
+    fillInProgress = true;
+    const overlay = $('#fill-overlay');
+    const currentEl = $('#fill-current');
+    const totalEl = $('#fill-total');
+    const fillEl = $('#fill-progress-fill');
+    currentEl.textContent = '0';
+    totalEl.textContent = total;
+    fillEl.style.width = '0%';
+    overlay.classList.remove('hidden');
+    setUIBlocked(true);
+  }
+
+  function updateFillProgress(current, total) {
+    const currentEl = $('#fill-current');
+    const totalEl = $('#fill-total');
+    const fillEl = $('#fill-progress-fill');
+    currentEl.textContent = current;
+    totalEl.textContent = total;
+    fillEl.style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
+  }
+
+  function hideFillOverlay() {
+    fillInProgress = false;
+    const overlay = $('#fill-overlay');
+    overlay.classList.add('hidden');
+    setUIBlocked(false);
+  }
+
+  function setUIBlocked(blocked) {
+    const btns = $$('.btn, .icon-btn, .link-btn, .profile-display, .recent-profile, .profile-card');
+    btns.forEach(btn => {
+      if (blocked) {
+        btn.setAttribute('disabled', '');
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.5';
+      } else {
+        btn.removeAttribute('disabled');
+        btn.style.pointerEvents = '';
+        btn.style.opacity = '';
+      }
+    });
   }
 
   function switchView(viewId) {
@@ -129,6 +174,8 @@
   }
 
   async function fillActiveProfile() {
+    if (fillInProgress) return;
+
     const activeId = await Storage.getActiveProfile();
     if (!activeId) {
       showToast('Selecciona un perfil primero', 'error');
@@ -151,6 +198,9 @@
       delay: m.delay
     }));
 
+    const total = fields.length;
+    showFillOverlay(total);
+
     try {
       const response = await chrome.runtime.sendMessage({
         action: 'fillFields',
@@ -162,10 +212,17 @@
       if (response && response.results) {
         const success = response.results.filter(r => r.success).length;
         const failed = response.results.filter(r => !r.success).length;
+        updateFillProgress(total, total);
+        await new Promise(resolve => setTimeout(resolve, 400));
+        hideFillOverlay();
         showToast(`Ejecutados: ${success} | Fallidos: ${failed}`, success > 0 ? 'success' : 'error');
         await updateLastUsed(activeId);
+      } else {
+        hideFillOverlay();
+        showToast('Error al ejecutar', 'error');
       }
     } catch (err) {
+      hideFillOverlay();
       showToast('Error al ejecutar', 'error');
     }
   }
@@ -765,6 +822,9 @@
       if (message.action === 'pickCancelled') {
         pendingPickItem = null;
         showToast('Selector cancelado', 'success');
+      }
+      if (message.action === 'fillProgress') {
+        updateFillProgress(message.current, message.total);
       }
       } catch (e) {}
     });

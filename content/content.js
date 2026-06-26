@@ -375,7 +375,9 @@
 
   async function executeSequence(actions, globalDelay) {
     const results = [];
-    for (const action of actions) {
+    const total = actions.length;
+    for (let i = 0; i < actions.length; i++) {
+      const action = actions[i];
       let result;
       if (action.actionType === 'click') {
         result = clickElement(action);
@@ -383,6 +385,9 @@
         result = fillSingleField(action, action.value);
       }
       results.push(result);
+      try {
+        chrome.runtime.sendMessage({ action: 'fillProgress', current: i + 1, total });
+      } catch (e) {}
       const delay = (action.delay !== null && action.delay !== undefined && action.delay !== '') ? action.delay : globalDelay;
       if (delay > 0) {
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -404,10 +409,14 @@
         });
         return true;
       } else {
-        const results = message.fields.map(field => {
+        const total = message.fields.length;
+        const results = message.fields.map((field, i) => {
           if (field.actionType === 'click') return clickElement(field);
           return fillSingleField(field, field.value);
         });
+        try {
+          chrome.runtime.sendMessage({ action: 'fillProgress', current: total, total });
+        } catch (e) {}
         sendResponse({ results });
       }
     }

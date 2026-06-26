@@ -164,7 +164,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.runtime.onMessage.addListener((message) => {
-  if (message.action === 'elementPicked' || message.action === 'pickCancelled') {
+  if (message.action === 'elementPicked' || message.action === 'pickCancelled' || message.action === 'fillProgress') {
     try { chrome.runtime.sendMessage(message); } catch (e) {}
   }
 });
