@@ -28,9 +28,13 @@
     const currentEl = $('#fill-current');
     const totalEl = $('#fill-total');
     const fillEl = $('#fill-progress-fill');
+    const spinner = overlay.querySelector('.fill-overlay-spinner');
+    const check = $('#fill-check');
     currentEl.textContent = '0';
     totalEl.textContent = total;
     fillEl.style.width = '0%';
+    spinner.style.display = '';
+    check.classList.add('hidden');
     overlay.classList.remove('hidden');
     setUIBlocked(true);
   }
@@ -213,7 +217,12 @@
         const success = response.results.filter(r => r.success).length;
         const failed = response.results.filter(r => !r.success).length;
         updateFillProgress(total, total);
-        await new Promise(resolve => setTimeout(resolve, 400));
+        const overlay = $('#fill-overlay');
+        const spinner = overlay.querySelector('.fill-overlay-spinner');
+        const check = $('#fill-check');
+        spinner.style.display = 'none';
+        check.classList.remove('hidden');
+        await new Promise(resolve => setTimeout(resolve, 1000));
         hideFillOverlay();
         showToast(`Ejecutados: ${success} | Fallidos: ${failed}`, success > 0 ? 'success' : 'error');
         await updateLastUsed(activeId);
