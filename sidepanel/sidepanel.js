@@ -35,6 +35,7 @@
     fillEl.style.width = '0%';
     spinner.style.display = '';
     check.classList.add('hidden');
+    $('#fill-overlay-title').textContent = 'Ejecutando perfil';
     overlay.classList.remove('hidden');
     setUIBlocked(true);
   }
@@ -222,6 +223,7 @@
         const check = $('#fill-check');
         spinner.style.display = 'none';
         check.classList.remove('hidden');
+        $('#fill-overlay-title').textContent = '¡Listo!';
         await new Promise(resolve => setTimeout(resolve, 1000));
         hideFillOverlay();
         showToast(`Ejecutados: ${success} | Fallidos: ${failed}`, success > 0 ? 'success' : 'error');
