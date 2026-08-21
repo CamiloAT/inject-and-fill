@@ -406,6 +406,18 @@
       sendResponse({ fields });
     }
 
+    if (message.action === 'validateFields') {
+      const results = message.fields.map(field => {
+        try {
+          const el = document.querySelector(field.selector);
+          return { selector: field.selector, found: !!el };
+        } catch (e) {
+          return { selector: field.selector, found: false };
+        }
+      });
+      sendResponse({ results });
+    }
+
     if (message.action === 'fillFields') {
       if (message.sequential) {
         executeSequence(message.fields, message.delay || 200).then(results => {

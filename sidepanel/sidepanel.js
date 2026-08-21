@@ -22,6 +22,40 @@
     setTimeout(() => toast.classList.add('hidden'), 2000);
   }
 
+  function showAlert({ title, message, type = 'error', confirmText = 'Aceptar', showCancel = false }) {
+    return new Promise(resolve => {
+      const modal = $('#alert-modal');
+      const icon = $('#alert-modal-icon');
+      const titleEl = $('#alert-modal-title');
+      const msgEl = $('#alert-modal-message');
+      const confirmBtn = $('#alert-modal-confirm');
+      const cancelBtn = $('#alert-modal-cancel');
+
+      icon.textContent = type === 'error' ? '\u2716' : '\u26A0';
+      icon.className = `alert-modal-icon ${type}`;
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      confirmBtn.textContent = confirmText;
+      confirmBtn.className = `btn alert-modal-confirm ${type}`;
+      cancelBtn.classList.toggle('hidden', !showCancel);
+
+      modal.classList.remove('hidden');
+
+      const cleanup = (result) => {
+        modal.classList.add('hidden');
+        confirmBtn.removeEventListener('click', onConfirm);
+        cancelBtn.removeEventListener('click', onCancel);
+        resolve(result);
+      };
+
+      const onConfirm = () => cleanup(true);
+      const onCancel = () => cleanup(false);
+
+      confirmBtn.addEventListener('click', onConfirm);
+      cancelBtn.addEventListener('click', onCancel);
+    });
+  }
+
   function showFillOverlay(total) {
     fillInProgress = true;
     const overlay = $('#fill-overlay');
@@ -211,6 +245,39 @@
       actionType: m.actionType || 'fill',
       delay: m.delay
     }));
+
+    try {
+      const validation = await chrome.runtime.sendMessage({
+        action: 'validateFields',
+        fields
+      });
+
+      if (validation && validation.results) {
+        const found = validation.results.filter(r => r.found).length;
+        const total = fields.length;
+
+        if (found === 0) {
+          await showAlert({
+            title: 'Página incorrecta',
+            message: `0 de ${total} elementos encontrados.\n\nSi ejecuta el perfil ahora, nada se ejecutará. Verifique que está en la página correcta.`,
+            type: 'error',
+            confirmText: 'Ejecutar de todas formas'
+          });
+          return;
+        }
+
+        if (found < total) {
+          const proceed = await showAlert({
+            title: 'Faltan elementos',
+            message: `${found} de ${total} elementos encontrados.\n\nSi continúa, es muy probable que el perfil no se ejecute correctamente o falle en algunos campos.`,
+            type: 'warning',
+            confirmText: 'Ejecutar de todas formas',
+            showCancel: true
+          });
+          if (!proceed) return;
+        }
+      }
+    } catch (e) {}
 
     const total = fields.length;
     showFillOverlay(total);

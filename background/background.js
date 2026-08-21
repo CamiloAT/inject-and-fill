@@ -101,6 +101,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === 'validateFields') {
+    getActiveTab().then(async (tab) => {
+      if (!tab) { sendResponse({ results: [] }); return; }
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content/content.js']
+        });
+      } catch (e) {}
+      const response = await sendToTab(tab.id, {
+        action: 'validateFields',
+        fields: message.fields
+      });
+      sendResponse(response || { results: [] });
+    });
+    return true;
+  }
+
   if (message.action === 'fillFields') {
     getActiveTab().then(async (tab) => {
       if (!tab) { sendResponse({ results: [] }); return; }
