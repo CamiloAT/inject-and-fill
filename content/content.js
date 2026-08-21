@@ -376,6 +376,8 @@
   async function executeSequence(actions, globalDelay) {
     const results = [];
     const total = actions.length;
+    let success = 0;
+    let failed = 0;
     for (let i = 0; i < actions.length; i++) {
       const action = actions[i];
       let result;
@@ -385,8 +387,10 @@
         result = fillSingleField(action, action.value);
       }
       results.push(result);
+      if (result && result.success) success++;
+      else failed++;
       try {
-        chrome.runtime.sendMessage({ action: 'fillProgress', current: i + 1, total });
+        chrome.runtime.sendMessage({ action: 'fillProgress', current: i + 1, total, success, failed });
       } catch (e) {}
       const delay = (action.delay !== null && action.delay !== undefined && action.delay !== '') ? action.delay : globalDelay;
       if (delay > 0) {
@@ -414,8 +418,10 @@
           if (field.actionType === 'click') return clickElement(field);
           return fillSingleField(field, field.value);
         });
+        const success = results.filter(r => r && r.success).length;
+        const failed = results.filter(r => !r || !r.success).length;
         try {
-          chrome.runtime.sendMessage({ action: 'fillProgress', current: total, total });
+          chrome.runtime.sendMessage({ action: 'fillProgress', current: total, total, success, failed });
         } catch (e) {}
         sendResponse({ results });
       }

@@ -874,6 +874,34 @@ body {
   transition: width 0.3s ease;
 }
 
+.fill-overlay-counts {
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.fill-overlay-counts.visible {
+  opacity: 0.45;
+}
+
+.fill-count-success {
+  color: #22c55e;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fill-count-failed {
+  color: #ef4444;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .fill-overlay-hint {
   font-size: 11px;
   color: var(--text-dim);

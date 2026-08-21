@@ -36,17 +36,26 @@
     spinner.style.display = '';
     check.classList.add('hidden');
     $('#fill-overlay-title').textContent = 'Ejecutando perfil';
+    $('#fill-overlay-counts').classList.remove('visible');
     overlay.classList.remove('hidden');
     setUIBlocked(true);
   }
 
-  function updateFillProgress(current, total) {
+  function updateFillProgress(current, total, success, failed) {
     const currentEl = $('#fill-current');
     const totalEl = $('#fill-total');
     const fillEl = $('#fill-progress-fill');
+    const countsEl = $('#fill-overlay-counts');
+    const successEl = $('#fill-count-success');
+    const failedEl = $('#fill-count-failed');
     currentEl.textContent = current;
     totalEl.textContent = total;
     fillEl.style.width = total > 0 ? `${(current / total) * 100}%` : '0%';
+    if (success !== undefined && failed !== undefined) {
+      successEl.textContent = `${success} ok`;
+      failedEl.textContent = `${failed} fail`;
+      if (success + failed > 0) countsEl.classList.add('visible');
+    }
   }
 
   function hideFillOverlay() {
@@ -835,7 +844,7 @@
         showToast('Selector cancelado', 'success');
       }
       if (message.action === 'fillProgress') {
-        updateFillProgress(message.current, message.total);
+        updateFillProgress(message.current, message.total, message.success, message.failed);
       }
       } catch (e) {}
     });
