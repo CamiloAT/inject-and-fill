@@ -235,7 +235,7 @@
         $('#fill-overlay-title').textContent = '¡Listo!';
         await new Promise(resolve => setTimeout(resolve, 1000));
         hideFillOverlay();
-        showToast(`Ejecutados: ${success} | Fallidos: ${failed}`, success > 0 ? 'success' : 'error');
+        showToast(`Ejecutados: ${success} | Fallidos: ${failed}`, failed > 0 ? 'warning' : 'success');
         await updateLastUsed(activeId);
       } else {
         hideFillOverlay();
@@ -641,7 +641,7 @@
       } else {
         const hint = response && response.error ? response.error : '';
         if (hint.includes('Cannot access') || hint.includes('file://')) {
-          showToast('Ve a chrome://extensions > Detalles > activa "Allow access to file URLs"', 'error');
+          showToast('Ve a chrome://extensions > Detalles > activa "Allow access to file URLs"', 'warning');
         } else {
           showToast('No se detectaron elementos', 'error');
         }
@@ -721,7 +721,7 @@
       await Storage.setActiveProfile(profile.id);
     }
 
-    showToast('Perfil guardado', 'success');
+    showToast(editingProfileId ? 'Perfil actualizado' : 'Perfil guardado', 'success');
     renderActiveProfile();
     renderProfiles();
     switchView('view-profiles');
@@ -841,7 +841,7 @@
       }
       if (message.action === 'pickCancelled') {
         pendingPickItem = null;
-        showToast('Selector cancelado', 'success');
+        showToast('Selector cancelado', 'info');
       }
       if (message.action === 'fillProgress') {
         updateFillProgress(message.current, message.total, message.success, message.failed);
@@ -853,11 +853,11 @@
     $('#btn-fill').addEventListener('click', fillActiveProfile);
     $('#btn-reload').addEventListener('click', () => {
       chrome.runtime.sendMessage({ action: 'reloadTab', bypassCache: false });
-      showToast('Recargando...', 'success');
+      showToast('Recargando...', 'info');
     });
     $('#btn-reload-nocache').addEventListener('click', () => {
       chrome.runtime.sendMessage({ action: 'reloadTab', bypassCache: true });
-      showToast('Recargando sin cache...', 'success');
+      showToast('Recargando sin cache...', 'info');
     });
     $('#btn-settings').addEventListener('click', () => switchView('view-settings'));
     $('#active-profile-display').addEventListener('click', () => {
@@ -897,7 +897,7 @@
         pendingPickItem = pickBtn.closest('.mapping-item');
         chrome.runtime.sendMessage({ action: 'startPickMode' }, (response) => {
           if (response && response.success) {
-            showToast('Toca un elemento en la pagina. ESC para cancelar.', 'success');
+            showToast('Toca un elemento en la pagina. ESC para cancelar.', 'info');
           } else {
             showToast('No se pudo activar el selector', 'error');
             pendingPickItem = null;
@@ -1031,7 +1031,7 @@
       if (e.key === 'Escape' && pendingPickItem) {
         pendingPickItem = null;
         try { chrome.runtime.sendMessage({ action: 'stopPickMode' }); } catch (err) {}
-        showToast('Selector cancelado', 'success');
+        showToast('Selector cancelado', 'info');
       }
     });
   }

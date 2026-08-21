@@ -735,6 +735,16 @@ body {
   color: var(--danger);
 }
 
+.toast.info {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.toast.warning {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
