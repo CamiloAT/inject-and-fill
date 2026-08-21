@@ -360,6 +360,14 @@
     list.querySelectorAll('.delete-profile-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
+        const proceed = await showAlert({
+          title: 'Eliminar perfil',
+          message: '¿Está seguro que desea eliminar este perfil?\n\nSi lo hace, no podrá recuperarlo a menos que ingrese todos los campos nuevamente.',
+          type: 'error',
+          confirmText: 'Eliminar',
+          showCancel: true
+        });
+        if (!proceed) return;
         await Storage.deleteProfile(btn.dataset.id);
         showToast('Eliminado', 'success');
         renderProfiles();
